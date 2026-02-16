@@ -83,7 +83,7 @@ The augmentation pipeline consists of two independent modules:
 * **GPR-SE:** Gaussian Process (Squared Exponential Kernel)
 * **MLP:** Multi-Layer Perceptron
 * **cGAN:** Conditional GAN
-* **NF:** Conditional Normalizing Flow
+* **NF:** Normalizing Flow
 * **ReFlow:** Rectified Flow (Diffusion-based model)
 
 ### 3. Positioning
