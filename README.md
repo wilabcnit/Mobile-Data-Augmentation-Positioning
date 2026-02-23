@@ -133,10 +133,11 @@ synthetic data was generated using the generate_mock_data.py script. The positio
 ## Citation
 
 If you use this code for your research, please cite:
-
+```
 @article{chahoud2025improving,
   title={Improving Outdoor Multi-cell Fingerprinting-based Positioning via Mobile Data Augmentation},
   author={Chahoud, Tony and Amorosa, Lorenzo Mario and Marini, Riccardo and De Nardis, Luca},
   journal={arXiv preprint arXiv:2509.19405},
   year={2025}
 }
+```
