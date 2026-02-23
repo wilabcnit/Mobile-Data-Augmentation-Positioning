@@ -86,6 +86,8 @@ The augmentation pipeline consists of two independent modules:
 * **NF:** Normalizing Flow
 * **ReFlow:** Rectified Flow (Diffusion-based model)
 
+**_Implementation Note:_** For the mock data provided here, we use a single "one-shot" training model. However, when dealing with real MDT data, models should be trained per-PCI (as done in the referenced paper) to accurately capture cell-specific signal characteristics.
+
 ### 3. Positioning
 
 The final utility is assessed by training a **Weighted KNN (wKNN)** positioning model on the augmented data and testing it on real real data.
