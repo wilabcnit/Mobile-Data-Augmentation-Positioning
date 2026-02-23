@@ -103,10 +103,16 @@ def generate_synthetic_data(spatial_algo, radio_algo, n_samples=5000):
     # Prepare coords for radio input
     coords_tensor = torch.FloatTensor(coords)
     
-    sklearn_models = ['knn', 'rf', 'gpr_rq', 'gpr_se']
-    
-    if radio_algo in sklearn_models:
+    sklearn_models = ['rf', 'gpr_rq', 'gpr_se']
+    if radio_algo == 'knn':
         rsrp = radio_model.predict(coords)
+        # Sustain unserved cell state(rsrp=-160) for the synthetic based on nearest-neighbor original PCIs at that specific positions spatial ground truth
+        rsrp[radio_model._y[radio_model.kneighbors(coords, 1)[1].flatten()] == -160] = -160
+        # In real MDT : Apply shadow fading variations to served cells as required by the environment (rsrp+noise)
+        rsrp = rsrp.astype(int)     
+    elif radio_algo in sklearn_models:
+        rsrp = radio_model.predict(coords)
+        
     else:
         # Deep Learning Models require normalization
         mean_key = 'mean_c' if 'mean_c' in r_ckpt else 'mean_in'
