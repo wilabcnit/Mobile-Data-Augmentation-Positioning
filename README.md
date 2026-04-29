@@ -2,7 +2,7 @@
 
 # MDT Augmentation for Improved Positioning in Mobile Networks
 
-This repository contains the code for the research paper: **"Improving Outdoor Multi-cell Fingerprinting-based Positioning via Mobile Data Augmentation."**
+This repository contains the code for the research paper: **"Improving Outdoor Multi-cell Fingerprinting-based Positioning via Mobile Data Augmentation."** https://arxiv.org/abs/2509.19405
 
 ---
 
