@@ -77,7 +77,7 @@ The augmentation pipeline consists of two independent modules:
 
 **Goal:** Learn the radio fingerprint of users and generate new valid radio fingerprints.
 
-* **KNN:** K-Nearest Neighbors Regressor
+* **KNN:** K-Nearest Neighbors Regressor **(K=1)**
 * **RF:** Random Forest Regressor
 * **GPR-RQ:** Gaussian Process (Rational Quadratic Kernel)
 * **GPR-SE:** Gaussian Process (Squared Exponential Kernel)
