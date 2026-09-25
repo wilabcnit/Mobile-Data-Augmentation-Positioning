@@ -21,9 +21,10 @@ mdt_augmentation/
 ├── train/                      # Training scripts
 │   ├── spatial/                
 │   ├── radio/                  
-├── test/                       # Evaluation scripts
+├── test/                       # Evaluation scripts(MAE)
 │   ├── spatial/                
-│   ├── radio/                  # includes knn_k_ablation.py                 
+│   ├── radio/                                 
+│   │   └── knn_k_ablation.py   # sweeps K = 1..5 for radio KNN
 ├── generate/                   # Synthetic data generator using trained modules
 │   ├── full_pipeline.py        
 ├── positioning/                # Positioning algorithm
