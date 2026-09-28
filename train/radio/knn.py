@@ -6,7 +6,7 @@ from sklearn.neighbors import KNeighborsRegressor
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from utils.data_loader import load_mdt_data
 
-def train_knn_radio(k=1):
+def train_knn_radio(k):
     print(f"Training Radio KNN (K={k})...")
     
     # 1. Load Data (Lat/Lon -> RSRP)
