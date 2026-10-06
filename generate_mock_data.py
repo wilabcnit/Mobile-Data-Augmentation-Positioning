@@ -77,6 +77,7 @@ def main():
     
     # Save
     train_df.to_csv('data/train.csv', index=False)
+    val_df.to_csv('data/validation.csv', index=False)
     test_df.to_csv('data/test.csv', index=False)
     
     print(f"Saved data/train.csv ({len(train_df)} samples)")
