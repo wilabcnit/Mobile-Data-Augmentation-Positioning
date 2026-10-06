@@ -70,6 +70,11 @@ def main():
     # Split into Train (80%) and Test (20%)
     train_df, test_df = train_test_split(full_df, test_size=0.2, random_state=42)
     
+    # Validation set used to select the best-performing hyperparameters for training
+    val_df = generate_mdt_data(n_samples=1000, n_cells=30)
+    
+    # Train model using train_df
+    
     # Save
     train_df.to_csv('data/train.csv', index=False)
     test_df.to_csv('data/test.csv', index=False)
