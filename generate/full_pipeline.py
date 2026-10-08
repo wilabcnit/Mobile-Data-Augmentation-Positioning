@@ -83,10 +83,24 @@ def knn_radio(radio_model, coords):
     Radio KNN generation: RSRP predicted by the KNN, then the unserved-cell state of the
     nearest real measurement is kept: a cell that is not served (RSRP = -160) at the nearest
     original position is also not served at the synthetic position.
+    
+    One neighbour search serves both steps. With K = 1 the prediction is the nearest real
+    fingerprint itself (it already carries its not-served cells), so it is a row lookup.
     """
-    rsrp = radio_model.predict(coords)
-    nearest = radio_model.kneighbors(coords, 1)[1].flatten()
-    rsrp[radio_model.y_train_[nearest] == UNSERVED_RSRP] = UNSERVED_RSRP
+    k = radio_model.model.n_neighbors
+    dist, idx = radio_model.kneighbors(coords, k)
+    neighbours = radio_model.y_train_[idx]                       # [N, K, n_cells]
+    if k == 1:
+        rsrp = neighbours[:, 0].astype(float)
+    else:
+        # Inverse-distance weights as in KNeighborsRegressor(weights='distance'):
+        # a neighbour at distance 0 takes all the weight
+        with np.errstate(divide='ignore'):
+            weights = 1.0 / dist
+        exact = np.isinf(weights)
+        weights[exact.any(axis=1)] = exact[exact.any(axis=1)]
+        rsrp = np.einsum('nk,nkc->nc', weights, neighbours) / weights.sum(axis=1, keepdims=True)
+        rsrp[neighbours[:, 0] == UNSERVED_RSRP] = UNSERVED_RSRP
     # In real MDT : Apply shadow fading variations to served cells as required by the environment (rsrp+noise)
     # Round to the 1 dB MDT reporting resolution (astype(int) alone truncates towards 0)
     return np.rint(rsrp).astype(int)

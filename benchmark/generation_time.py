@@ -27,7 +27,7 @@ from generate.full_pipeline import synthesize, load_spatial_model, load_radio_mo
 AUGMENTATION_RATES = (10, 20, 30)
 RADIO_MODELS = [('knn', 'KDE-1NN (Proposed)'), ('rf', 'KDE-RF'), ('gpr_rq', 'KDE-GPR (RQ)'),
                 ('mlp', 'KDE-MLP'), ('cgan', 'KDE-CGAN'), ('rec_flow', 'KDE-ReFlow'), ('nf', 'KDE-NF')]
-N_RUNS = 3
+N_RUNS = 5
 
 def cpu_model():
     try:
@@ -55,8 +55,8 @@ def main():
                 start = time.perf_counter()
                 synthesize('kde', radio_algo, n, spatial=spatial, radio=radio)
                 times.append(time.perf_counter() - start)
-            row[f"A = {a} ({n:,} samples)"] = f"{np.median(times):.1f} s"
-            print(f"{label:<20} A={a:<3} {np.median(times):8.2f} s  (runs: {', '.join(f'{t:.2f}' for t in times)})", flush=True)
+            row[f"A = {a} ({n:,} samples)"] = f"{np.median(times):.3f} s"
+            print(f"{label:<20} A={a:<3} {np.median(times):8.3f} s  (runs: {', '.join(f'{t:.3f}' for t in times)})", flush=True)
         rows.append(row)
 
     hardware = (f"{cpu_model()}, {os.cpu_count()} logical CPUs, {torch.get_num_threads()} PyTorch threads, "
