@@ -43,7 +43,7 @@ def load_radio_model(model_type):
     elif model_type == 'mlp':
         ckpt = torch.load(path_torch)
         from models.radio.definitions import RadioMLP
-        model = RadioMLP(input_dim=2, output_dim=30)
+        model = RadioMLP(input_dim=2, output_dim=len(ckpt['mean_out']))
         model.load_state_dict(ckpt['model_state_dict'])
         model.eval()
         return model, ckpt
@@ -51,7 +51,7 @@ def load_radio_model(model_type):
     elif model_type == 'cgan':
         ckpt = torch.load(path_torch)
         from models.radio.definitions import RadioGenerator
-        model = RadioGenerator(condition_dim=2, latent_dim=ckpt['latent_dim'], output_dim=30)
+        model = RadioGenerator(condition_dim=2, latent_dim=ckpt['latent_dim'], output_dim=len(ckpt['mean_out']))
         model.load_state_dict(ckpt['model_state_dict'])
         model.eval()
         return model, ckpt
@@ -59,7 +59,7 @@ def load_radio_model(model_type):
     elif model_type == 'nf':
         ckpt = torch.load(path_torch)
         from models.radio.definitions import RadioNF
-        model = RadioNF(input_dim=30, condition_dim=2, n_flows=8)
+        model = RadioNF(input_dim=len(ckpt['mean_x']), condition_dim=2, n_flows=8)
         model.load_state_dict(ckpt['model_state_dict'])
         model.eval()
         return model, ckpt
@@ -69,12 +69,27 @@ def load_radio_model(model_type):
             print(f"Error: {path_torch} not found!")
             return None, None
         ckpt = torch.load(path_torch)
-        model = VelocityField(input_dim=30, condition_dim=2)
+        model = VelocityField(input_dim=len(ckpt['mean_x']), condition_dim=2)
         model.load_state_dict(ckpt['model_state_dict'])
         model.eval()
         return model, ckpt
         
     return None, None
+
+UNSERVED_RSRP = -160
+
+def knn_radio(radio_model, coords):
+    """
+    Radio KNN generation: RSRP predicted by the KNN, then the unserved-cell state of the
+    nearest real measurement is kept: a cell that is not served (RSRP = -160) at the nearest
+    original position is also not served at the synthetic position.
+    """
+    rsrp = radio_model.predict(coords)
+    nearest = radio_model.kneighbors(coords, 1)[1].flatten()
+    rsrp[radio_model.y_train_[nearest] == UNSERVED_RSRP] = UNSERVED_RSRP
+    # In real MDT : Apply shadow fading variations to served cells as required by the environment (rsrp+noise)
+    # Round to the 1 dB MDT reporting resolution (astype(int) alone truncates towards 0)
+    return np.rint(rsrp).astype(int)
 
 SPATIAL_MODELS = ['kde', 'nf', 'gan', 'gmm']
 RADIO_MODELS = ['knn', 'mlp', 'cgan', 'gpr_rq', 'gpr_se', 'nf', 'rec_flow', 'rf']
@@ -112,12 +127,7 @@ def generate_synthetic_data(spatial_algo, radio_algo, n_samples=5000, seed=42):
     
     sklearn_models = ['rf', 'gpr_rq', 'gpr_se']
     if radio_algo == 'knn':
-        rsrp = radio_model.predict(coords)
-        # Sustain unserved cell state(rsrp=-160) for the synthetic based on nearest-neighbor original PCIs at that specific positions spatial ground truth
-        rsrp[radio_model._y[radio_model.kneighbors(coords, 1)[1].flatten()] == -160] = -160
-        # In real MDT : Apply shadow fading variations to served cells as required by the environment (rsrp+noise)
-        # Round to the 1 dB MDT reporting resolution (astype(int) alone truncates towards 0)
-        rsrp = np.rint(rsrp).astype(int)
+        rsrp = knn_radio(radio_model, coords)
     elif radio_algo in sklearn_models:
         rsrp = radio_model.predict(coords)
         
@@ -136,10 +146,10 @@ def generate_synthetic_data(spatial_algo, radio_algo, n_samples=5000, seed=42):
                 z = torch.randn(n_samples, r_ckpt['latent_dim'])
                 rsrp_norm = radio_model(z, coords_norm)
             elif radio_algo == 'nf':
-                z = torch.randn(n_samples, 30) 
+                z = torch.randn(n_samples, len(r_ckpt['mean_x']))
                 rsrp_norm = radio_model.inverse(z, coords_norm)
             elif radio_algo == 'rec_flow':
-                xt = torch.randn(n_samples, 30)
+                xt = torch.randn(n_samples, len(r_ckpt['mean_x']))
                 n_steps = 25 
                 dt = 1.0 / n_steps
                 for i in range(n_steps):

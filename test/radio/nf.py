@@ -16,7 +16,8 @@ def test_nf_radio(n_draws=100):
 
     checkpoint = torch.load('models/radio/nf.pth')
     
-    flow = RadioNF(input_dim=30, condition_dim=2, n_flows=8)
+    n_cells = len(checkpoint['mean_x'])
+    flow = RadioNF(input_dim=n_cells, condition_dim=2, n_flows=8)
     flow.load_state_dict(checkpoint['model_state_dict'])
     flow.eval()
     
@@ -27,7 +28,7 @@ def test_nf_radio(n_draws=100):
     # MAE of the mean over n_draws (its radio-map estimate, comparable to KNN/RF/GPR/MLP)
     with torch.no_grad():
         # Sample z from prior, then inverse: z, c -> x
-        draws = torch.stack([flow.inverse(torch.randn(coords.size(0), 30), coords_norm) for _ in range(n_draws)])
+        draws = torch.stack([flow.inverse(torch.randn(coords.size(0), n_cells), coords_norm) for _ in range(n_draws)])
         
     draws_rsrp = draws * checkpoint['std_x'] + checkpoint['mean_x']
     

@@ -16,7 +16,8 @@ def test_reflow_radio(n_draws=100):
 
     checkpoint = torch.load('models/radio/rec_flow.pth')
     
-    model = VelocityField(input_dim=30, condition_dim=2)
+    n_cells = len(checkpoint['mean_x'])
+    model = VelocityField(input_dim=n_cells, condition_dim=2)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     
@@ -34,7 +35,7 @@ def test_reflow_radio(n_draws=100):
     with torch.no_grad():
         for _ in range(n_draws):
             # Start from Noise x0
-            x = torch.randn(coords.size(0), 30)
+            x = torch.randn(coords.size(0), n_cells)
             
             for i in range(steps):
                 t_value = i * dt

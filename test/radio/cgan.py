@@ -17,7 +17,7 @@ def test_cgan_radio(n_draws=100):
     checkpoint = torch.load('models/radio/cgan.pth')
     latent_dim = checkpoint['latent_dim']
     
-    G = RadioGenerator(condition_dim=2, latent_dim=latent_dim, output_dim=30)
+    G = RadioGenerator(condition_dim=2, latent_dim=latent_dim, output_dim=len(checkpoint['mean_out']))
     G.load_state_dict(checkpoint['model_state_dict'])
     G.eval()
     

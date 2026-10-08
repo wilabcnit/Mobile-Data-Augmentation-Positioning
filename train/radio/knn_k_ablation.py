@@ -3,9 +3,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 from train.radio.knn import train_knn_radio
 from utils.data_loader import load_mdt_data
 from utils.metrics import calculate_radio_mae
+from utils.geo import haversine_distance
+from generate.full_pipeline import knn_radio
+from positioning.train import build_wknn
 import joblib
 import numpy as np
-from positioning.train import build_wknn
 
 def validation_positioning_error(knn, kde, train_df, val_df, n_samples=2000, seed=42):
     """
@@ -14,13 +16,13 @@ def validation_positioning_error(knn, kde, train_df, val_df, n_samples=2000, see
     """
     coords = kde.sample(n_samples, random_state=seed)
     rsrp_cols = [c for c in train_df.columns if 'RSRP' in c]
-    X = np.vstack([train_df[rsrp_cols].values, knn.predict(coords)])
+    X = np.vstack([train_df[rsrp_cols].values, knn_radio(knn, coords)])
     y = np.vstack([train_df[['LATITUDE', 'LONGITUDE']].values, coords])
     wknn = build_wknn().fit(X, y)
-    errors = np.linalg.norm(wknn.predict(val_df[rsrp_cols].values) - val_df[['LATITUDE', 'LONGITUDE']].values, axis=1)
+    errors = haversine_distance(wknn.predict(val_df[rsrp_cols].values), val_df[['LATITUDE', 'LONGITUDE']].values)
     return np.median(errors)
 
-def run_k_ablation(k_values=(1, 2, 3, 5, 10, 20)):
+def run_k_ablation(k_values=(1, 2, 3, 4, 5)):
     # K is a hyperparameter: it is evaluated on the VALIDATION set, never on the test set
     coords_val, real_rsrp = load_mdt_data('data/validation.csv', mode='radio')
     coords_val, real_rsrp = coords_val.numpy(), real_rsrp.numpy()
@@ -39,7 +41,7 @@ def run_k_ablation(k_values=(1, 2, 3, 5, 10, 20)):
     for k, (mae, pos_err) in results.items():
         print(f"{k:<5}{mae:<24.4f}{pos_err:<12.3f}")
     best_k = min(results, key=lambda k: results[k][1])
-    print(f"Selected K (lowest validation positioning error): {best_k}")
+    print(f"Lowest validation positioning error: K={best_k}")
     return results, best_k
 
 if __name__ == "__main__":

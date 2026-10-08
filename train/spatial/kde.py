@@ -25,7 +25,7 @@ def train_kde():
         print("Warning: best bandwidth is at the edge of the search grid.")
     
     best_kde = KernelDensity(kernel='gaussian', bandwidth=bandwidths[best_idx]).fit(data)
-    print(f"Best Bandwidth: {best_kde.bandwidth:.4f} (validation log-likelihood: {scores[best_idx]:.2f})")
+    print(f"Best Bandwidth: {best_kde.bandwidth:.3g} (validation log-likelihood: {scores[best_idx]:.2f})")
     
     # 3. Save Model
     os.makedirs('models/spatial', exist_ok=True)

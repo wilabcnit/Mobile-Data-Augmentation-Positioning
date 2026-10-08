@@ -10,6 +10,7 @@ from models.radio.definitions import VelocityField
 
 def train_reflow_radio(epochs=300, batch_size=64, lr=0.001):
     print("Training Radio Rectified Flow...")
+    torch.manual_seed(42)  # reproducible initialization, batches and noise
     
     # 1. Data
     coords, rsrps = load_mdt_data('data/train.csv', mode='radio')

@@ -15,7 +15,7 @@ def test_mlp_radio():
         return
 
     checkpoint = torch.load('models/radio/mlp.pth')
-    model = RadioMLP(input_dim=2, output_dim=30) # Assuming 30 cells
+    model = RadioMLP(input_dim=2, output_dim=len(checkpoint['mean_out']))
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     

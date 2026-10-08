@@ -1,6 +1,8 @@
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 
+from utils.geo import GeoRegressor, to_local_m
+
 def fit_gpr(X, y, kernel, n_hyper=2000, seed=42):
     """
     Fits a GPR radio map in two steps:
@@ -10,14 +12,17 @@ def fit_gpr(X, y, kernel, n_hyper=2000, seed=42):
     
     normalize_y=True centers/scales each RSRP column, so far from the data the prediction
     reverts to the mean RSRP instead of 0 dBm.
+    
+    X is (LATITUDE, LONGITUDE) in degrees; the GPR works on planar metres (GeoRegressor),
+    so the length scale is in metres.
     """
     rng = np.random.default_rng(seed)
     idx = rng.choice(len(X), size=min(n_hyper, len(X)), replace=False)
     
     gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True, n_restarts_optimizer=2, random_state=seed)
-    gpr.fit(X[idx], y[idx])
+    gpr.fit(to_local_m(X[idx]), y[idx])
     print(f"Learned kernel: {gpr.kernel_}")
     
-    gpr_full = GaussianProcessRegressor(kernel=gpr.kernel_, normalize_y=True, optimizer=None, copy_X_train=False)
+    gpr_full = GeoRegressor(GaussianProcessRegressor(kernel=gpr.kernel_, normalize_y=True, optimizer=None, copy_X_train=False))
     gpr_full.fit(X, y)
     return gpr_full

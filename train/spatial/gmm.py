@@ -6,7 +6,7 @@ from sklearn.mixture import GaussianMixture
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from utils.data_loader import load_mdt_data
 
-def train_gmm(max_components=15):
+def train_gmm(max_components=40):
     print("Training Spatial GMM...")
     
     # 1. Load Data

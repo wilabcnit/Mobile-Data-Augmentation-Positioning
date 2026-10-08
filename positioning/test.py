@@ -8,11 +8,7 @@ from tabulate import tabulate
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 from generate.full_pipeline import SPATIAL_MODELS, RADIO_MODELS
 from utils.stats_compare import compare_models_paired
-
-def euclidean_distance(pred, true):
-    # Euclidean distance for positioning error. Valid for the mock data, whose coordinates
-    # are in metres; real LAT/LON in degrees needs the haversine distance instead.
-    return np.sqrt(np.sum((pred - true)**2, axis=1))
+from utils.geo import haversine_distance
 
 def positioning_errors(model_name):
     """Returns the per-point positioning errors on the ORIGINAL test set, or None if the model does not exist."""
@@ -32,8 +28,8 @@ def positioning_errors(model_name):
     # 3. Predict Locations
     y_pred = wknn.predict(X_test)
 
-    # 4. Calculate Positioning Error
-    return euclidean_distance(y_pred, y_test)
+    # 4. Calculate Positioning Error (great-circle distance in metres between WGS84 positions)
+    return haversine_distance(y_pred, y_test)
 
 def test_positioning(model_name):
     errors = positioning_errors(model_name)

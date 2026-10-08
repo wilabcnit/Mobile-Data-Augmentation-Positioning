@@ -11,6 +11,7 @@ from models.radio.definitions import RadioGenerator, RadioDiscriminator
 
 def train_cgan_radio(epochs=500, batch_size=64, lr=0.0002):
     print("Training Radio cGAN (least-squares objective)...")
+    torch.manual_seed(42)  # reproducible initialization, batches and noise
     
     # 1. Load & Normalize Data
     coords, rsrps = load_mdt_data('data/train.csv', mode='radio')

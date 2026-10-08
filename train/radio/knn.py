@@ -5,6 +5,7 @@ from sklearn.neighbors import KNeighborsRegressor
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from utils.data_loader import load_mdt_data
+from utils.geo import GeoRegressor
 
 def train_knn_radio(k, save_path=None):
     print(f"Training Radio KNN (K={k})...")
@@ -16,7 +17,8 @@ def train_knn_radio(k, save_path=None):
     rsrps = rsrps.numpy()
     
     # 2. Train
-    knn = KNeighborsRegressor(n_neighbors=k, weights='distance')
+    # Neighbours are searched in metres (GeoRegressor), not in degrees
+    knn = GeoRegressor(KNeighborsRegressor(n_neighbors=k, weights='distance'))
     knn.fit(coords, rsrps)
     
     # 3. Save
@@ -27,5 +29,5 @@ def train_knn_radio(k, save_path=None):
     return save_path
 
 if __name__ == "__main__":
-    # K selected by train/radio/knn_k_ablation.py (lowest validation positioning error)
-    train_knn_radio(k=10, save_path='models/radio/knn.pkl')
+    # K=1 as in the paper; train/radio/knn_k_ablation.py reports K = 1..5 on the validation set
+    train_knn_radio(k=1, save_path='models/radio/knn.pkl')
