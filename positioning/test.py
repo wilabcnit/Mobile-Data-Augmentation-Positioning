@@ -40,14 +40,14 @@ def test_positioning(model_name):
         "errors": errors
     }
 
-def print_table(title, suffix, baseline):
+def print_table(title, baseline):
     """Median positioning error of every spatial x radio combination."""
     header = ["Spatial \\ Radio"] + [r.upper() for r in RADIO_MODELS]
     rows = [["Original data"] + [f"{baseline['median']:.3f}m" if baseline else "X"] * len(RADIO_MODELS)]
     for s in SPATIAL_MODELS:
         row = [s.upper()]
         for r in RADIO_MODELS:
-            res = test_positioning(f"wknn_{s}_{r}{suffix}")
+            res = test_positioning(f"wknn_{s}_{r}")
             if res is None:
                 row.append("X")
                 continue
@@ -65,6 +65,5 @@ def print_table(title, suffix, baseline):
 if __name__ == "__main__":
     # Results Print
     baseline = test_positioning('wknn_baseline')
-    print_table("MEDIAN POSITIONING ERROR - wKNN TRAINED ON REAL + SYNTHETIC MDT DATA", "", baseline)
-    print_table("MEDIAN POSITIONING ERROR - wKNN TRAINED ON SYNTHETIC MDT DATA ONLY", "_synth", baseline)
+    print_table("MEDIAN POSITIONING ERROR - wKNN TRAINED ON REAL + SYNTHETIC MDT DATA", baseline)
     print("* median error significantly different from the original data (paired bootstrap 95% CI on the median difference excludes 0)")

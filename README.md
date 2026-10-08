@@ -39,7 +39,7 @@ pip install torch numpy pandas scikit-learn scipy joblib tabulate
 ├── generate/
 │   └── full_pipeline.py        # synthetic MDT generation (spatial model -> radio model)
 ├── positioning/
-│   ├── train.py                # wKNN training (real + synthetic, or synthetic only)
+│   ├── train.py                # wKNN training (real + synthetic)
 │   └── test.py                 # median positioning error + paired significance test
 ├── benchmark/
 │   └── complexity.py           # computational complexity benchmark
@@ -117,7 +117,7 @@ The stochastic models (cGAN, NF, ReFlow) are scored both on a single draw (what 
 
 ### 3. Positioning
 
-A **weighted KNN (wKNN)** positioning model (K = 3, weights = inverse **Manhattan** distance between RSRP fingerprints) is trained on the **real training data + synthetic data** and tested on the real test set. Models trained on synthetic data only are also reported (`wknn_<spatial>_<radio>_synth`).
+A **weighted KNN (wKNN)** positioning model (K = 3, weights = inverse **Manhattan** distance between RSRP fingerprints) is trained on the **real training data + synthetic data** and tested on the real test set.
 
 The **positioning error** is the great-circle (**haversine**) distance in metres between the estimated and the true WGS84 position. The haversine distance is used only for this error; the wKNN compares fingerprints with the Manhattan distance.
 
@@ -128,7 +128,7 @@ The **positioning error** is the great-circle (**haversine**) distance in metres
 ```bash
 python generate/full_pipeline.py kde knn     # one combination (2 x real training size) -> augm_data/synthetic_kde_knn.csv
 python generate/full_pipeline.py all         # all 32 combinations
-python positioning/train.py all              # baseline + all combinations (real+synthetic and synthetic-only)
+python positioning/train.py all              # baseline + all combinations (real + synthetic)
 python positioning/test.py                   # median positioning error tables
 python benchmark/complexity.py               # complexity benchmark -> benchmark/complexity_results.md
 ```
@@ -201,20 +201,9 @@ K = 1 gives the lowest median error and is the only K that significantly improve
 | **GAN** | 4.920m* | 5.131m | 5.157m | 5.064m | 5.147m | 5.163m | 5.503m* | 5.178m |
 | **GMM** | 4.898m* | 5.129m | 5.237m | 5.099m | 5.141m | 5.145m | 5.481m* | 5.138m |
 
-**wKNN trained on synthetic data only:**
-
-| Spatial \ Radio | KNN | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m |
-| **KDE** | 5.680m* | 20.249m* | 94.848m* | 7.590m* | 9.710m* | 113.285m* | 64.555m* | 8.558m* |
-| **NF** | 5.751m* | 20.826m* | 99.912m* | 7.569m* | 9.485m* | 121.908m* | 65.294m* | 8.850m* |
-| **GAN** | 14.684m* | 35.886m* | 105.534m* | 21.856m* | 23.556m* | 128.640m* | 85.386m* | 23.687m* |
-| **GMM** | 6.443m* | 20.279m* | 106.655m* | 8.642m* | 10.326m* | 128.506m* | 69.661m* | 9.890m* |
-
 ### Summary
 
 * **Real + synthetic data:** KDE + KNN reduces the median error from 5.153 m to 4.921 m (paired bootstrap 95 % CI of the difference [-0.52, -0.03] m). KNN is the best radio model for every spatial model. KDE + KNN is significantly better than KDE + MLP, KDE + GPR-SE and KDE + RF; the KNN-based combinations GMM + KNN (4.898 m), GAN + KNN (4.920 m) and NF + KNN (4.984 m) are not significantly different from it.
-* **Synthetic data only:** KDE + KNN gives the lowest median error of all 32 combinations (5.680 m); it is significantly better than GMM + KNN, KDE + GPR-RQ and KDE + RF, and not significantly different from NF + KNN (5.751 m).
 
 ### Computational complexity
 
