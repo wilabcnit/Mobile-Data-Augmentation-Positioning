@@ -32,6 +32,8 @@ def load_spatial_model(model_type):
     return None, None
 
 def load_radio_model(model_type):
+    if model_type.startswith('knn_k'):          # radio KNN with K = 2..5 (ablation)
+        return joblib.load(knn_model_path(int(model_type[len('knn_k'):]))), None
     path = f'models/radio/{model_type}.pkl'
     path_torch = f'models/radio/{model_type}.pth'
     
@@ -119,6 +121,7 @@ def n_synthetic(train_path='data/train.csv'):
     return SYNTHETIC_RATIO * n_real
 
 SPATIAL_MODELS = ['kde', 'nf', 'gan', 'gmm']
+KNN_ABLATION_MODELS = [f'knn_k{k}' for k in KNN_K_VALUES if k != 1]   # augm_data/synthetic_<spatial>_knn_k<K>.csv
 RADIO_MODELS = ['knn', 'mlp', 'cgan', 'gpr_rq', 'gpr_se', 'nf', 'rec_flow', 'rf']
 
 PREDICT_BATCH = 20000   # sklearn models predict in batches (exact GPR needs a batch x N_train kernel matrix)
@@ -161,7 +164,7 @@ def synthesize(spatial_algo, radio_algo, n_samples, seed=42, spatial=None, radio
     coords_tensor = torch.FloatTensor(coords)
     
     sklearn_models = ['rf', 'gpr_rq', 'gpr_se']
-    if radio_algo == 'knn':
+    if radio_algo.startswith('knn'):
         rsrp = batched_predict(lambda c: knn_radio(radio_model, c), coords)
     elif radio_algo in sklearn_models:
         rsrp = batched_predict(radio_model.predict, coords)
@@ -218,7 +221,8 @@ if __name__ == "__main__":
     # Usage: python generate/full_pipeline.py [spatial radio | all]   (default: kde knn)
     args = sys.argv[1:]
     if args == ['all']:
-        combos = [(s, r) for s in SPATIAL_MODELS for r in RADIO_MODELS]
+        # All 32 spatial x radio combinations + radio KNN with K = 2..5 (ablation)
+        combos = [(s, r) for s in SPATIAL_MODELS for r in RADIO_MODELS + KNN_ABLATION_MODELS]
     elif len(args) == 2:
         combos = [tuple(args)]
     else:

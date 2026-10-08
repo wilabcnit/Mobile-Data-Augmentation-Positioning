@@ -14,7 +14,7 @@ mdt_augmentation/
 │   ├── train.csv
 │   ├── validation.csv          # hyperparameter selection only
 │   └── test.csv
-├── augm_data/                  # Output directory for synthetic MDT datasets
+├── augm_data/                  # Synthetic MDT datasets (32 combinations + radio KNN K = 2..5)
 ├── models/                     # Saved models
 │   ├── spatial/                # KDE, GMM, GAN, NF models
 │   ├── radio/                  # KNN, RF, GPR, MLP, cGAN, NF, ReFlow models
@@ -105,7 +105,7 @@ The final utility is assessed by training a **Weighted KNN (wKNN, K=3, inverse M
 
 ### 4. Generating Augmented Data
 
-Each synthetic dataset has 2 × the real training size (14,000 samples). To generate a specific synthetic dataset, or all 32 combinations:
+Each synthetic dataset has 2 × the real training size (14,000 samples). To generate a specific synthetic dataset, or all of them (the 32 spatial × radio combinations and, for the K ablation, the radio KNN with K = 2..5: `synthetic_<spatial>_knn_k<K>.csv`):
 
 ```
 python generate/full_pipeline.py kde knn
