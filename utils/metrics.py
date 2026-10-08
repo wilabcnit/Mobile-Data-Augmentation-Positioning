@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.stats import ks_2samp
 from sklearn.metrics import mean_absolute_error
 
 from utils.ks2d_ff import ks2d2s
@@ -34,13 +33,8 @@ def calculate_spatial_ks(real_coords, generated_coords, n_perm=1000, seed=0):
     real_coords = np.asarray(real_coords, dtype=float)
     generated_coords = np.asarray(generated_coords, dtype=float)
 
-    ks_lat = ks_2samp(real_coords[:, 0], generated_coords[:, 0])
-    ks_lon = ks_2samp(real_coords[:, 1], generated_coords[:, 1])
     ks_2d = ks2d2s(real_coords, generated_coords, method="permutation", n_perm=n_perm, seed=seed)
 
     return {
-        "ks_lat": ks_lat.statistic, "p_lat": ks_lat.pvalue,
-        "ks_lon": ks_lon.statistic, "p_lon": ks_lon.pvalue,
-        "avg_ks": 0.5 * (ks_lat.statistic + ks_lon.statistic),
         "ks_2d": ks_2d["D"], "p_2d": ks_2d["p"]
     }
