@@ -4,17 +4,17 @@ from train.radio.knn import train_knn_radio
 from utils.data_loader import load_mdt_data
 from utils.metrics import calculate_radio_mae
 from utils.geo import haversine_distance
-from generate.full_pipeline import knn_radio
+from generate.full_pipeline import knn_radio, n_synthetic
 from positioning.train import build_wknn
 import joblib
 import numpy as np
 
-def validation_positioning_error(knn, kde, train_df, val_df, n_samples=2000, seed=42):
+def validation_positioning_error(knn, kde, train_df, val_df, n_samples=None, seed=42):
     """
     Downstream utility of a radio KNN: median error on the VALIDATION set of a wKNN trained
     on real + synthetic data (KDE positions, radio from this KNN), as in the full pipeline.
     """
-    coords = kde.sample(n_samples, random_state=seed)
+    coords = kde.sample(n_samples or n_synthetic(), random_state=seed)
     rsrp_cols = [c for c in train_df.columns if 'RSRP' in c]
     X = np.vstack([train_df[rsrp_cols].values, knn_radio(knn, coords)])
     y = np.vstack([train_df[['LATITUDE', 'LONGITUDE']].values, coords])

@@ -109,7 +109,7 @@ One urban scenario (city center around Bologna), 10,000 MDT measurements, 35 cel
 * **NF:** Conditional Normalizing Flow.
 * **ReFlow:** Rectified Flow.
 
-GPR inputs are positions in metres; targets are normalized (`normalize_y=True`), and the kernel hyperparameters (amplitude, length scale, noise level) are learned by maximizing the marginal likelihood on a 2,000-point subset, then the GPR is refit on all training points. The fitted GPR models are large, so they are not stored in the repository: `python train/radio/gpr_rq.py` and `python train/radio/gpr_se.py` re-create them.
+GPR inputs are positions in metres; targets are normalized (`normalize_y=True`), and the kernel hyperparameters (amplitude, length scale, noise level) are learned by maximizing the marginal likelihood on a 2,000-point subset, then the GPR is refit on all training points. The fitted GPR models are large, so they are not stored in the repository: `python train/radio/gpr_rq.py` and `python train/radio/gpr_se.py` re-create them. The synthetic datasets (`augm_data/`) and the positioning models (`models/positioning/`) are also not stored (several hundred MB); `python generate/full_pipeline.py all` and `python positioning/train.py all` re-create them.
 
 The stochastic models (cGAN, NF, ReFlow) are scored both on a single draw (what the augmentation uses) and on the mean of 100 draws (their radio-map estimate, comparable to the deterministic regressors).
 
@@ -126,7 +126,7 @@ The **positioning error** is the great-circle (**haversine**) distance in metres
 ### 4. Running the steps individually
 
 ```bash
-python generate/full_pipeline.py kde knn     # one combination -> augm_data/synthetic_kde_knn.csv
+python generate/full_pipeline.py kde knn     # one combination (2 x real training size) -> augm_data/synthetic_kde_knn.csv
 python generate/full_pipeline.py all         # all 32 combinations
 python positioning/train.py all              # baseline + all combinations (real+synthetic and synthetic-only)
 python positioning/test.py                   # median positioning error tables
@@ -137,17 +137,17 @@ python benchmark/complexity.py               # complexity benchmark -> benchmark
 
 ## Results on the mock data (test set)
 
-All numbers below are on the **test set** (2,000 measurements), produced by `run_pipeline.sh` with fixed seeds.
+All numbers below are on the **test set** (2,000 measurements), produced by `run_pipeline.sh` with fixed seeds. Each synthetic dataset has **2 × the real training set = 14,000 samples** (`SYNTHETIC_RATIO` in `generate/full_pipeline.py`).
 
 ### Radio KNN: K ablation (validation set)
 
 | K | Validation radio MAE (dB) | Validation median positioning error (m) |
 | :--- | :--- | :--- |
-| **1** | **2.54** | **5.40** |
-| 2 | 2.72 | 5.52 |
-| 3 | 2.93 | 5.51 |
-| 4 | 3.11 | 5.61 |
-| 5 | 3.28 | 5.68 |
+| **1** | **2.54** | **5.26** |
+| 2 | 2.72 | 5.46 |
+| 3 | 2.93 | 5.54 |
+| 4 | 3.11 | 5.59 |
+| 5 | 3.28 | 5.58 |
 
 K = 1 gives the lowest radio error and the lowest downstream positioning error: copying the nearest real fingerprint keeps its exact set of served / not-served cells, whereas averaging K > 1 neighbours mixes RSRP values with the -160 not-served value.
 
@@ -157,13 +157,13 @@ K = 1 gives the lowest radio error and the lowest downstream positioning error: 
 
 | Radio KNN | Median error (m) | vs original data (5.153 m), 95 % CI | K = 1 minus this K, 95 % CI |
 | :--- | :--- | :--- | :--- |
-| **K = 1** | **5.182** | +0.029 [-0.159, 0.144] | – |
-| K = 2 | 5.375 | +0.222 [0.080, 0.352] | **-0.193 [-0.369, -0.087]** |
-| K = 3 | 5.350 | +0.197 [0.017, 0.313] | **-0.168 [-0.337, -0.002]** |
-| K = 4 | 5.294 | +0.141 [-0.013, 0.262] | -0.112 [-0.300, 0.046] |
-| K = 5 | 5.315 | +0.162 [0.002, 0.283] | -0.132 [-0.318, 0.035] |
+| **K = 1** | **4.921** | **-0.232 [-0.522, -0.027]** | – |
+| K = 2 | 5.063 | -0.090 [-0.318, 0.085] | -0.142 [-0.374, 0.041] |
+| K = 3 | 5.285 | +0.132 [-0.065, 0.301] | **-0.364 [-0.618, -0.167]** |
+| K = 4 | 5.359 | +0.206 [0.003, 0.382] | **-0.438 [-0.720, -0.196]** |
+| K = 5 | 5.422 | +0.269 [0.056, 0.457] | **-0.501 [-0.807, -0.240]** |
 
-K = 1 gives the lowest median error; it is significantly lower than K = 2 and K = 3 (bold: CI excludes 0). With K ≥ 2 the averaged fingerprints mix RSRP values with the -160 not-served value and the error increases above that of the original data.
+K = 1 gives the lowest median error and is the only K that significantly improves on the original data; it is significantly better than K = 3, 4, 5 (bold: CI excludes 0).
 
 ### Spatial models: two-sample KS tests (generated vs test positions)
 
@@ -196,25 +196,25 @@ K = 1 gives the lowest median error; it is significantly lower than K = 2 and K 
 | Spatial \ Radio | KNN | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Original data** | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m |
-| **KDE** | 5.182m | 5.141m | 5.237m* | 5.191m | 5.146m | 5.145m | 5.265m* | 5.155m |
-| **NF** | 5.170m | 5.129m | 5.213m | 5.106m | 5.191m | 5.191m | 5.226m | 5.104m |
-| **GAN** | 5.120m | 5.141m | 5.146m | 5.116m | 5.147m | 5.136m | 5.213m | 5.203m |
-| **GMM** | 5.041m* | 5.129m | 5.213m | 5.111m | 5.136m | 5.136m | 5.292m* | 5.077m* |
+| **KDE** | 4.921m* | 5.171m | 5.201m | 5.076m | 5.146m | 5.153m | 5.518m* | 5.183m |
+| **NF** | 4.984m | 5.136m | 5.218m | 5.008m* | 5.187m | 5.136m | 5.535m* | 5.122m |
+| **GAN** | 4.920m* | 5.131m | 5.157m | 5.064m | 5.147m | 5.163m | 5.503m* | 5.178m |
+| **GMM** | 4.898m* | 5.129m | 5.237m | 5.099m | 5.141m | 5.145m | 5.481m* | 5.138m |
 
 **wKNN trained on synthetic data only:**
 
 | Spatial \ Radio | KNN | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Original data** | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m |
-| **KDE** | 13.390m* | 22.807m* | 97.500m* | 16.746m* | 16.422m* | 132.016m* | 72.243m* | 17.154m* |
-| **NF** | 13.944m* | 24.320m* | 100.197m* | 17.242m* | 16.997m* | 130.845m* | 72.575m* | 17.460m* |
-| **GAN** | 39.773m* | 45.773m* | 109.281m* | 48.570m* | 48.713m* | 148.645m* | 95.456m* | 49.201m* |
-| **GMM** | 19.011m* | 24.046m* | 108.741m* | 21.977m* | 21.954m* | 135.115m* | 78.706m* | 22.786m* |
+| **KDE** | 5.680m* | 20.249m* | 94.848m* | 7.590m* | 9.710m* | 113.285m* | 64.555m* | 8.558m* |
+| **NF** | 5.751m* | 20.826m* | 99.912m* | 7.569m* | 9.485m* | 121.908m* | 65.294m* | 8.850m* |
+| **GAN** | 14.684m* | 35.886m* | 105.534m* | 21.856m* | 23.556m* | 128.640m* | 85.386m* | 23.687m* |
+| **GMM** | 6.443m* | 20.279m* | 106.655m* | 8.642m* | 10.326m* | 128.506m* | 69.661m* | 9.890m* |
 
 ### Summary
 
-* **Synthetic data only:** KDE + KNN gives the lowest median error of all 32 combinations (13.39 m). It is significantly better than KDE + RF and KDE + GPR-SE (paired bootstrap CIs of the median difference [-4.69, -2.86] m and [-4.06, -2.30] m); the difference with NF + KNN is not significant ([-1.60, 0.37] m). KNN is the best radio model for every spatial model.
-* **Real + synthetic data:** the mock training set is dense (7,000 measurements in an area of about 1.2 km × 1.5 km), so the median error of the original data (5.15 m) is already low and changes by at most 0.14 m with augmentation (significant decreases: GMM + KNN 5.04 m, GMM + RF 5.08 m; significant increases: KDE + cGAN, KDE + ReFlow, GMM + ReFlow). KDE + KNN (5.18 m) is not significantly different from the original data.
+* **Real + synthetic data:** KDE + KNN reduces the median error from 5.153 m to 4.921 m (paired bootstrap 95 % CI of the difference [-0.52, -0.03] m). KNN is the best radio model for every spatial model. KDE + KNN is significantly better than KDE + MLP, KDE + GPR-SE and KDE + RF; the KNN-based combinations GMM + KNN (4.898 m), GAN + KNN (4.920 m) and NF + KNN (4.984 m) are not significantly different from it.
+* **Synthetic data only:** KDE + KNN gives the lowest median error of all 32 combinations (5.680 m); it is significantly better than GMM + KNN, KDE + GPR-RQ and KDE + RF, and not significantly different from NF + KNN (5.751 m).
 
 ### Computational complexity
 
@@ -223,14 +223,13 @@ K = 1 gives the lowest median error; it is significantly lower than K = 2 and K 
 Hardware: Intel(R) Xeon(R) Processor @ 2.80GHz, 4 logical CPUs, Python 3.13.16, scikit-learn 1.9.1
 Data: 7000 real training fingerprints, 35 cells; 50 timed runs per step.
 
-| Step                                                    |   Median time (ms) | Mean ± std (ms)   |   Median per sample (µs) |
-|:--------------------------------------------------------|-------------------:|:------------------|-------------------------:|
-| Spatial augmentation: KDE sampling of 2000 positions    |               0.33 | 0.35 ± 0.08       |                     0.16 |
-| Radio augmentation: 1NN fingerprints for 2000 positions |               7.62 | 7.79 ± 0.92       |                     3.81 |
-| wKNN training on 9000 real + synthetic fingerprints     |               0.21 | 0.26 ± 0.14       |                     0.02 |
-| Positioning inference: wKNN on 2000 test fingerprints   |             478.07 | 682.81 ± 426.63   |                   239.04 |
-| End-to-end: augmentation + wKNN training + inference    |             500.2  | 640.16 ± 303.71   |                   250.1  |
-
+| Step                                                     |   Median time (ms) | Mean ± std (ms)   |   Median per sample (µs) |
+|:---------------------------------------------------------|-------------------:|:------------------|-------------------------:|
+| Spatial augmentation: KDE sampling of 14000 positions    |               1.24 | 1.26 ± 0.08       |                     0.09 |
+| Radio augmentation: 1NN fingerprints for 14000 positions |              46.53 | 47.81 ± 4.49      |                     3.32 |
+| wKNN training on 21000 real + synthetic fingerprints     |               0.2  | 0.21 ± 0.03       |                     0.01 |
+| Positioning inference: wKNN on 2000 test fingerprints    |            1203.58 | 1645.09 ± 709.86  |                   601.79 |
+| End-to-end: augmentation + wKNN training + inference     |            1883.64 | 2094.77 ± 966.47  |                   941.82 |
 
 ## Citation
 

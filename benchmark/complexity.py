@@ -20,11 +20,11 @@ import sklearn
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 from utils.data_loader import load_mdt_data
-from generate.full_pipeline import knn_radio
+from generate.full_pipeline import knn_radio, n_synthetic
 from positioning.train import build_wknn
 
 N_RUNS = 50
-N_SYNTHETIC = 2000
+N_SYNTHETIC = n_synthetic()   # 2 x the real training set, as in the pipeline
 
 def cpu_model():
     try:

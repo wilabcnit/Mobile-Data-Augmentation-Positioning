@@ -91,6 +91,14 @@ def knn_radio(radio_model, coords):
     # Round to the 1 dB MDT reporting resolution (astype(int) alone truncates towards 0)
     return np.rint(rsrp).astype(int)
 
+# Size of each synthetic dataset: SYNTHETIC_RATIO x the number of real training samples
+SYNTHETIC_RATIO = 2
+
+def n_synthetic(train_path='data/train.csv'):
+    with open(train_path) as f:
+        n_real = sum(1 for _ in f) - 1   # minus the header line
+    return SYNTHETIC_RATIO * n_real
+
 SPATIAL_MODELS = ['kde', 'nf', 'gan', 'gmm']
 RADIO_MODELS = ['knn', 'mlp', 'cgan', 'gpr_rq', 'gpr_se', 'nf', 'rec_flow', 'rf']
 
@@ -183,4 +191,4 @@ if __name__ == "__main__":
     else:
         combos = [('kde', 'knn')]
     for spatial_algo, radio_algo in combos:
-        generate_synthetic_data(spatial_algo, radio_algo, n_samples=2000)
+        generate_synthetic_data(spatial_algo, radio_algo, n_samples=n_synthetic())

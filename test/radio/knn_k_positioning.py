@@ -13,15 +13,15 @@ import numpy as np
 import pandas as pd
 from utils.geo import haversine_distance
 from utils.stats_compare import compare_models_paired
-from generate.full_pipeline import knn_radio
+from generate.full_pipeline import knn_radio, n_synthetic
 from positioning.train import build_wknn
 
-def run(k_values=(1, 2, 3, 4, 5), n_samples=2000, seed=42):
+def run(k_values=(1, 2, 3, 4, 5), n_samples=None, seed=42):
     train_df, test_df = pd.read_csv('data/train.csv'), pd.read_csv('data/test.csv')
     coords_cols = ['LATITUDE', 'LONGITUDE']
     rsrp_cols = [c for c in train_df.columns if 'RSRP' in c]
     kde = joblib.load('models/spatial/kde.pkl')
-    coords = kde.sample(n_samples, random_state=seed)   # same synthetic positions for every K
+    coords = kde.sample(n_samples or n_synthetic(), random_state=seed)   # same synthetic positions for every K
 
     def errors(X, y):
         wknn = build_wknn().fit(X, y)
