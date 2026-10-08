@@ -60,7 +60,7 @@ Generate the mock MDT dataset:
 python generate_mock_data.py
 ```
 
-This creates `data/train.csv` (70 %), `data/validation.csv` (10 %) and `data/test.csv` (20 %): 10,000 MDT measurements in a city-center scenario (WGS84 coordinates around Bologna, ~2 km²), 35 cells, 3GPP TR 38.901 UMa NLOS pathloss, 7.8 dB spatially correlated shadow fading (50 m decorrelation distance). Each measurement reports at most the 8 strongest detected cells; the other cells are not served (RSRP = -160).
+This creates `data/train.csv` (70 %), `data/validation.csv` (10 %) and `data/test.csv` (20 %): 10,000 MDT measurements in a city-center scenario (WGS84 coordinates around Bologna, ~2 km²), 35 cells, 3GPP TR 38.901 UMa NLOS pathloss, 7.8 dB spatially correlated shadow fading. Each measurement reports at most the 8 strongest detected cells; the other cells are not served (RSRP = -160).
 
 To run the whole workflow (data → models → synthetic data → positioning):
 ```bash
@@ -152,7 +152,8 @@ Generated vs real test positions (`python test/spatial/<model>.py`). A mean abso
 
 ### Positioning: median error (m)
 
-wKNN trained on real + synthetic data. The KNN radio model is reported for K = 1 (proposed, `python positioning/test.py`) and K = 2..5 (`python positioning/knn_k_ablation.py`).
+The KNN radio model is reported for K = 1 (proposed, `python positioning/test.py`) and K = 2..5 (`python positioning/knn_k_ablation.py`).
+The positioning performance was then tested across all model combinations. The results below represent the Median Positioning Error achieved during this test run:
 
 | Spatial \ Radio | KNN K=1 | KNN K=2 | KNN K=3 | KNN K=4 | KNN K=5 | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
