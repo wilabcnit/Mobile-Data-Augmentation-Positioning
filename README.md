@@ -144,19 +144,31 @@ Median positioning error on the real test set (2,000 measurements), wKNN trained
 
 KDE + KNN reduces the median error from 5.153 m to 4.921 m, and KNN is the best radio model for every spatial model.
 
-### Radio KNN: K ablation
+### Radio KNN: K ablation (all spatial models)
 
-`python train/radio/knn.py` trains the radio KNN for K = 1..5 and `python test/radio/knn.py` reports their radio MAE. `python positioning/knn_k_ablation.py` reports the median positioning error (KDE positions, real + synthetic data) on the validation set, where K is selected, and on the test set.
+`python train/radio/knn.py` trains the radio KNN for K = 1..5 and `python test/radio/knn.py` reports their radio MAE. `python positioning/knn_k_ablation.py` reports the median positioning error (real + synthetic data) for every spatial model and K, on the validation set (where K is selected) and on the test set.
 
-| K | Validation (m) | Test (m) |
-| :--- | :--- | :--- |
-| **1** | **5.26** | **4.92** |
-| 2 | 5.46 | 5.06 |
-| 3 | 5.54 | 5.29 |
-| 4 | 5.59 | 5.36 |
-| 5 | 5.58 | 5.42 |
+**Test set** (`*` = significantly different from the original data, paired bootstrap 95 % CI):
 
-K = 1 copies the nearest real fingerprint with its exact set of served / not-served cells, whereas K > 1 averages RSRP values with the -160 not-served value.
+| Spatial \ Radio KNN | K=1 | K=2 | K=3 | K=4 | K=5 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Original data** | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m |
+| **KDE** | **4.921m*** | 5.063m | 5.285m | 5.359m* | 5.422m* |
+| **NF** | **4.984m** | 5.175m | 5.242m | 5.109m | 5.202m |
+| **GAN** | **4.920m*** | 5.133m | 5.291m | 5.352m* | 5.332m* |
+| **GMM** | **4.898m*** | 5.142m | 5.253m | 5.331m | 5.365m |
+
+**Validation set:**
+
+| Spatial \ Radio KNN | K=1 | K=2 | K=3 | K=4 | K=5 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Original data** | 5.510m | 5.510m | 5.510m | 5.510m | 5.510m |
+| **KDE** | **5.258m** | 5.464m | 5.543m | 5.587m | 5.584m |
+| **NF** | **5.262m** | 5.349m | 5.545m | 5.721m | 5.762m |
+| **GAN** | **5.243m** | 5.363m | 5.253m | 5.452m | 5.564m |
+| **GMM** | **5.067m** | 5.373m | 5.696m | 5.694m | 5.751m |
+
+K = 1 gives the lowest positioning error for every spatial model, on both the validation and the test set. K = 1 copies the nearest real fingerprint with its exact set of served / not-served cells, whereas K > 1 averages RSRP values with the -160 not-served value.
 
 ### Synthetic data generation time
 
