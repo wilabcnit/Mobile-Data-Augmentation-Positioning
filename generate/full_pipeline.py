@@ -102,15 +102,23 @@ def n_synthetic(train_path='data/train.csv'):
 SPATIAL_MODELS = ['kde', 'nf', 'gan', 'gmm']
 RADIO_MODELS = ['knn', 'mlp', 'cgan', 'gpr_rq', 'gpr_se', 'nf', 'rec_flow', 'rf']
 
-def generate_synthetic_data(spatial_algo, radio_algo, n_samples=5000, seed=42):
-    print(f"Running Augmentation Pipeline: Spatial[{spatial_algo}] -> Radio[{radio_algo}]")
-    
+PREDICT_BATCH = 20000   # sklearn models predict in batches (exact GPR needs a batch x N_train kernel matrix)
+
+def batched_predict(fn, coords, batch=PREDICT_BATCH):
+    return np.concatenate([fn(coords[i:i + batch]) for i in range(0, len(coords), batch)])
+
+def synthesize(spatial_algo, radio_algo, n_samples, seed=42, spatial=None, radio=None):
+    """
+    Generates n_samples synthetic MDT samples: positions from the spatial model, then
+    RSRP from the radio model. spatial / radio are (model, checkpoint) pairs; they are
+    loaded from models/ when not given. Returns (coords [N, 2], rsrp [N, n_cells]).
+    """
     # Fixed seeds so the synthetic datasets (and the results table) are reproducible
     np.random.seed(seed)
     torch.manual_seed(seed)
     
     # --- 1. Generate Spatial Coords (Lat, Lon) ---
-    spatial_model, s_ckpt = load_spatial_model(spatial_algo)
+    spatial_model, s_ckpt = spatial or load_spatial_model(spatial_algo)
     
     if spatial_algo == 'kde':
         coords = spatial_model.sample(n_samples, random_state=seed)
@@ -128,23 +136,23 @@ def generate_synthetic_data(spatial_algo, radio_algo, n_samples=5000, seed=42):
         coords = coords_norm * s_ckpt['std'] + s_ckpt['mean']
     
     # --- 2. Predict Radio Map (RSRP) ---
-    radio_model, r_ckpt = load_radio_model(radio_algo)
+    radio_model, r_ckpt = radio or load_radio_model(radio_algo)
     
     # Prepare coords for radio input
     coords_tensor = torch.FloatTensor(coords)
     
     sklearn_models = ['rf', 'gpr_rq', 'gpr_se']
     if radio_algo == 'knn':
-        rsrp = knn_radio(radio_model, coords)
+        rsrp = batched_predict(lambda c: knn_radio(radio_model, c), coords)
     elif radio_algo in sklearn_models:
-        rsrp = radio_model.predict(coords)
+        rsrp = batched_predict(radio_model.predict, coords)
         
     else:
         # Deep Learning Models require normalization
         mean_key = 'mean_c' if 'mean_c' in r_ckpt else 'mean_in'
         std_key = 'std_c' if 'std_c' in r_ckpt else 'std_in'
-        mean_in = torch.tensor(r_ckpt[mean_key]).float()
-        std_in = torch.tensor(r_ckpt[std_key]).float()
+        mean_in = torch.as_tensor(r_ckpt[mean_key]).float()
+        std_in = torch.as_tensor(r_ckpt[std_key]).float()
         coords_norm = (coords_tensor - mean_in) / std_in
         
         with torch.no_grad():
@@ -169,11 +177,17 @@ def generate_synthetic_data(spatial_algo, radio_algo, n_samples=5000, seed=42):
         m_out = r_ckpt[out_m_key].cpu().numpy()
         s_out = r_ckpt[out_s_key].cpu().numpy()
         rsrp = rsrp_norm.numpy() * s_out + m_out
+    
+    return coords, rsrp
+
+def generate_synthetic_data(spatial_algo, radio_algo, n_samples=5000, seed=42):
+    print(f"Running Augmentation Pipeline: Spatial[{spatial_algo}] -> Radio[{radio_algo}]")
+    coords, rsrp = synthesize(spatial_algo, radio_algo, n_samples, seed)
 
     # --- 3. Save ---
     df_aug = pd.DataFrame(coords, columns=['LATITUDE', 'LONGITUDE'])
-    for i in range(rsrp.shape[1]):
-        df_aug[f'RSRP_{i+1}'] = rsrp[:, i]
+    rsrp_df = pd.DataFrame(rsrp, columns=[f'RSRP_{i+1}' for i in range(rsrp.shape[1])])
+    df_aug = pd.concat([df_aug, rsrp_df], axis=1)
         
     os.makedirs('augm_data', exist_ok=True)
     out_path = f'augm_data/synthetic_{spatial_algo}_{radio_algo}.csv'

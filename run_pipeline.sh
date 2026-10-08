@@ -27,3 +27,4 @@ python positioning/test.py
 
 echo "== 7. Complexity benchmark =="
 python benchmark/complexity.py
+python benchmark/generation_time.py
