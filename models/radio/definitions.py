@@ -58,6 +58,8 @@ class ConditionalAffineCouplingLayer(nn.Module):
         super(ConditionalAffineCouplingLayer, self).__init__()
         self.input_dim = input_dim
         self.split_dim = input_dim // 2
+        # Size of the transformed half (input_dim - split_dim, also correct for odd input_dim)
+        self.out_dim = input_dim - self.split_dim
         
         # Scale and Translation networks take (x_half + condition) as input
         self.net_input_dim = self.split_dim + condition_dim
@@ -65,13 +67,13 @@ class ConditionalAffineCouplingLayer(nn.Module):
         self.scale_net = nn.Sequential(
             nn.Linear(self.net_input_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, self.split_dim),
+            nn.Linear(hidden_dim, self.out_dim),
             nn.Tanh()
         )
         self.trans_net = nn.Sequential(
             nn.Linear(self.net_input_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, self.split_dim)
+            nn.Linear(hidden_dim, self.out_dim)
         )
 
     def forward(self, x, c, reverse=False):
