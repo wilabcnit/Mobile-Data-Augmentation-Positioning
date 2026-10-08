@@ -34,8 +34,8 @@ def test_nf_radio(n_draws=100):
     
     mae_single = calculate_radio_mae(real_rsrps.numpy(), draws_rsrp[0].numpy())
     mae_mean = calculate_radio_mae(real_rsrps.numpy(), draws_rsrp.mean(dim=0).numpy())
-    print(f"NF Radio MAE (single draw): {mae_single:.4f} dBm")
-    print(f"NF Radio MAE (mean of {n_draws} draws): {mae_mean:.4f} dBm")
+    print(f"NF Radio MAE (single draw): {mae_single:.4f} dB")
+    print(f"NF Radio MAE (mean of {n_draws} draws): {mae_mean:.4f} dB")
 
 if __name__ == "__main__":
     test_nf_radio()

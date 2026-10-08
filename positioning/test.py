@@ -37,14 +37,13 @@ def test_positioning(model_name):
         return None
     return {
         "median": np.median(errors),
-        "mean": np.mean(errors),
-        "p95": np.percentile(errors, 95),
         "errors": errors
     }
 
-def print_table(title, suffix, baseline, stat):
+def print_table(title, suffix, baseline):
+    """Median positioning error of every spatial x radio combination."""
     header = ["Spatial \\ Radio"] + [r.upper() for r in RADIO_MODELS]
-    rows = [["Original data"] + [f"{baseline[stat]:.3f}m" if baseline else "X"] * len(RADIO_MODELS)]
+    rows = [["Original data"] + [f"{baseline['median']:.3f}m" if baseline else "X"] * len(RADIO_MODELS)]
     for s in SPATIAL_MODELS:
         row = [s.upper()]
         for r in RADIO_MODELS:
@@ -52,9 +51,9 @@ def print_table(title, suffix, baseline, stat):
             if res is None:
                 row.append("X")
                 continue
-            cell = f"{res[stat]:.3f}m"
+            cell = f"{res['median']:.3f}m"
             # '*': median significantly different from the baseline (paired bootstrap 95% CI)
-            if stat == 'median' and baseline and compare_models_paired(res['errors'], baseline['errors'])["Significant"]:
+            if baseline and compare_models_paired(res['errors'], baseline['errors'])["Significant"]:
                 cell += "*"
             row.append(cell)
         rows.append(row)
@@ -66,8 +65,6 @@ def print_table(title, suffix, baseline, stat):
 if __name__ == "__main__":
     # Results Print
     baseline = test_positioning('wknn_baseline')
-    print_table("MEDIAN POSITIONING ERROR - wKNN TRAINED ON REAL + SYNTHETIC MDT DATA", "", baseline, "median")
-    print_table("MEDIAN POSITIONING ERROR - wKNN TRAINED ON SYNTHETIC MDT DATA ONLY", "_synth", baseline, "median")
-    print_table("MEAN POSITIONING ERROR - wKNN TRAINED ON REAL + SYNTHETIC MDT DATA", "", baseline, "mean")
-    print_table("MEAN POSITIONING ERROR - wKNN TRAINED ON SYNTHETIC MDT DATA ONLY", "_synth", baseline, "mean")
+    print_table("MEDIAN POSITIONING ERROR - wKNN TRAINED ON REAL + SYNTHETIC MDT DATA", "", baseline)
+    print_table("MEDIAN POSITIONING ERROR - wKNN TRAINED ON SYNTHETIC MDT DATA ONLY", "_synth", baseline)
     print("* median error significantly different from the original data (paired bootstrap 95% CI on the median difference excludes 0)")

@@ -24,7 +24,7 @@ def test_knn_radio():
     pred_rsrps = knn.predict(coords)
     
     mae = calculate_radio_mae(real_rsrps, pred_rsrps)
-    print(f"KNN Radio MAE: {mae:.4f} dBm")
+    print(f"KNN Radio MAE: {mae:.4f} dB")
 
 if __name__ == "__main__":
     test_knn_radio()

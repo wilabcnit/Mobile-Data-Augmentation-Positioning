@@ -37,7 +37,7 @@ def run_k_ablation(k_values=(1, 2, 3, 4, 5)):
         pred = knn.predict(coords_val)
         results[k] = (calculate_radio_mae(real_rsrp, pred), validation_positioning_error(knn, kde, train_df, val_df))
 
-    print(f"{'K':<5}{'Val. radio MAE (dBm)':<24}{'Val. median positioning error (m)':<12}")
+    print(f"{'K':<5}{'Val. radio MAE (dB)':<24}{'Val. median positioning error (m)':<12}")
     for k, (mae, pos_err) in results.items():
         print(f"{k:<5}{mae:<24.4f}{pos_err:<12.3f}")
     best_k = min(results, key=lambda k: results[k][1])

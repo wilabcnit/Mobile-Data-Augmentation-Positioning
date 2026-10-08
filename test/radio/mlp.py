@@ -31,7 +31,7 @@ def test_mlp_radio():
     preds_rsrp = preds_norm * checkpoint['std_out'] + checkpoint['mean_out']
     
     mae = calculate_radio_mae(real_rsrps.numpy(), preds_rsrp.numpy())
-    print(f"MLP Radio MAE: {mae:.4f} dBm")
+    print(f"MLP Radio MAE: {mae:.4f} dB")
 
 if __name__ == "__main__":
     test_mlp_radio()

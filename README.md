@@ -40,7 +40,7 @@ pip install torch numpy pandas scikit-learn scipy joblib tabulate
 │   └── full_pipeline.py        # synthetic MDT generation (spatial model -> radio model)
 ├── positioning/
 │   ├── train.py                # wKNN training (real + synthetic, or synthetic only)
-│   └── test.py                 # median / mean positioning error + paired significance test
+│   └── test.py                 # median positioning error + paired significance test
 ├── benchmark/
 │   └── complexity.py           # computational complexity benchmark
 ├── utils/
@@ -121,7 +121,7 @@ A **weighted KNN (wKNN)** positioning model (K = 3, weights = inverse **Manhatta
 
 The **positioning error** is the great-circle (**haversine**) distance in metres between the estimated and the true WGS84 position. The haversine distance is used only for this error; the wKNN compares fingerprints with the Manhattan distance.
 
-`positioning/test.py` reports the **median** and the **mean** positioning error. A median is marked significantly different from the original data when the paired bootstrap 95 % confidence interval of the median difference (same test points, 2,000 resamples) excludes 0.
+`positioning/test.py` reports the **median** positioning error. A median is marked significantly different from the original data when the paired bootstrap 95 % confidence interval of the median difference (same test points, 2,000 resamples) excludes 0.
 
 ### 4. Running the steps individually
 
@@ -129,7 +129,7 @@ The **positioning error** is the great-circle (**haversine**) distance in metres
 python generate/full_pipeline.py kde knn     # one combination -> augm_data/synthetic_kde_knn.csv
 python generate/full_pipeline.py all         # all 32 combinations
 python positioning/train.py all              # baseline + all combinations (real+synthetic and synthetic-only)
-python positioning/test.py                   # results tables
+python positioning/test.py                   # median positioning error tables
 python benchmark/complexity.py               # complexity benchmark -> benchmark/complexity_results.md
 ```
 
@@ -141,7 +141,7 @@ All numbers below are on the **test set** (2,000 measurements), produced by `run
 
 ### Radio KNN: K ablation (validation set)
 
-| K | Validation radio MAE (dBm) | Validation median positioning error (m) |
+| K | Validation radio MAE (dB) | Validation median positioning error (m) |
 | :--- | :--- | :--- |
 | **1** | **2.54** | **5.40** |
 | 2 | 2.72 | 5.52 |
@@ -162,7 +162,7 @@ K = 1 gives the lowest radio error and the lowest downstream positioning error: 
 
 ### Radio models: MAE on the test set
 
-| Model | MAE (dBm) | MAE, mean of 100 draws (dBm) |
+| Model | MAE (dB) | MAE, mean of 100 draws (dB) |
 | :--- | :--- | :--- |
 | KNN (K=1) | 2.53 | – |
 | GPR-RQ | 3.17 | – |
@@ -197,32 +197,10 @@ K = 1 gives the lowest radio error and the lowest downstream positioning error: 
 | **GAN** | 39.773m* | 45.773m* | 109.281m* | 48.570m* | 48.713m* | 148.645m* | 95.456m* | 49.201m* |
 | **GMM** | 19.011m* | 24.046m* | 108.741m* | 21.977m* | 21.954m* | 135.115m* | 78.706m* | 22.786m* |
 
-### Positioning: mean error (m)
-
-**wKNN trained on real + synthetic data (augmentation):**
-
-| Spatial \ Radio | KNN | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 16.093m | 16.093m | 16.093m | 16.093m | 16.093m | 16.093m | 16.093m | 16.093m |
-| **KDE** | 15.429m | 16.044m | 16.237m | 15.926m | 15.986m | 16.057m | 16.632m | 16.000m |
-| **NF** | 15.604m | 16.017m | 16.128m | 15.947m | 16.036m | 16.137m | 16.459m | 16.057m |
-| **GAN** | 15.778m | 15.964m | 16.105m | 16.148m | 16.132m | 16.060m | 16.632m | 16.169m |
-| **GMM** | 14.778m | 16.086m | 16.108m | 15.718m | 15.921m | 16.087m | 16.314m | 15.866m |
-
-**wKNN trained on synthetic data only:**
-
-| Spatial \ Radio | KNN | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 16.093m | 16.093m | 16.093m | 16.093m | 16.093m | 16.093m | 16.093m | 16.093m |
-| **KDE** | 33.459m | 52.316m | 120.546m | 39.621m | 40.598m | 148.159m | 89.057m | 40.276m |
-| **NF** | 35.164m | 54.022m | 123.580m | 40.603m | 41.416m | 150.254m | 90.398m | 41.016m |
-| **GAN** | 82.445m | 93.364m | 133.661m | 87.377m | 90.251m | 166.358m | 108.516m | 89.936m |
-| **GMM** | 40.516m | 54.021m | 133.486m | 43.107m | 44.703m | 155.090m | 98.187m | 44.523m |
-
 ### Summary
 
-* **Synthetic data only:** KDE + KNN gives the lowest error of all 32 combinations (median 13.39 m, mean 33.46 m). It is significantly better than KDE + RF and KDE + GPR-SE (paired bootstrap CIs of the median difference [-4.69, -2.86] m and [-4.06, -2.30] m); the difference with NF + KNN is not significant ([-1.60, 0.37] m). KNN is the best radio model for every spatial model.
-* **Real + synthetic data:** the mock training set is dense (7,000 measurements in an area of about 1.2 km × 1.5 km), so the median error of the original data (5.15 m) is already low and changes by at most 0.14 m with augmentation (significant decreases: GMM + KNN 5.04 m, GMM + RF 5.08 m; significant increases: KDE + cGAN, KDE + ReFlow, GMM + ReFlow). The **mean** error, driven by the large errors, decreases with KNN-based augmentation: original 16.09 m → KDE + KNN 15.43 m (bootstrap 95 % CI of the mean difference [-1.15, -0.21] m) and GMM + KNN 14.78 m ([-1.86, -0.80] m). KNN gives the lowest mean error for every spatial model.
+* **Synthetic data only:** KDE + KNN gives the lowest median error of all 32 combinations (13.39 m). It is significantly better than KDE + RF and KDE + GPR-SE (paired bootstrap CIs of the median difference [-4.69, -2.86] m and [-4.06, -2.30] m); the difference with NF + KNN is not significant ([-1.60, 0.37] m). KNN is the best radio model for every spatial model.
+* **Real + synthetic data:** the mock training set is dense (7,000 measurements in an area of about 1.2 km × 1.5 km), so the median error of the original data (5.15 m) is already low and changes by at most 0.14 m with augmentation (significant decreases: GMM + KNN 5.04 m, GMM + RF 5.08 m; significant increases: KDE + cGAN, KDE + ReFlow, GMM + ReFlow). KDE + KNN (5.18 m) is not significantly different from the original data.
 
 ### Computational complexity
 
