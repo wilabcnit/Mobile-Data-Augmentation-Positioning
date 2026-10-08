@@ -39,6 +39,7 @@ mdt_augmentation/
 │   ├── metrics.py
 │   └── stats_compare.py
 ├── generate_mock_data.py
+├── benchmark_complexity.py      # synthetic data generation time (A = 10, 20, 30)
 └── run_pipeline.sh             # full workflow, end to end
 ```
 
@@ -166,6 +167,19 @@ The positioning performance was then tested across all model combinations. The r
 KDE + 1NN reduces the median error from 5.153 m to 4.921 m. KNN with K = 1 is the best radio model for every spatial model; K > 1 averages RSRP values with the -160 not-served value, while K = 1 copies the nearest real fingerprint with its exact set of served / not-served cells.
 
 K is selected on the **validation set** (median positioning error, `python positioning/knn_k_ablation.py`): K = 1 is the best for every spatial model.
+
+
+### Synthetic data generation time
+
+`python benchmark_complexity.py`: KDE sampling + radio model inference for A × m synthetic samples (m = 7,000 real training samples, A = augmentation rate), median of 5 runs (GPR-RQ: 3 runs), after one warm-up run, excluding model loading and file I/O, single PyTorch thread. The radio KNN is the proposed 1NN.
+
+| | **KDE-1NN (Proposed)** | KDE-RF | KDE-GPR (RQ) | KDE-MLP | KDE-CGAN | KDE-ReFlow | KDE-NF |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **A = 10** | **0.100 s** | 0.111 s | 18.757 s | 0.256 s | 0.177 s | 6.655 s | 0.383 s |
+| **A = 20** | **0.228 s** | 0.236 s | 37.207 s | 0.538 s | 0.379 s | 13.694 s | 1.426 s |
+| **A = 30** | **0.296 s** | 0.407 s | 57.270 s | 0.748 s | 0.758 s | 26.288 s | 2.158 s |
+
+Absolute times depend on the hardware; compare the models within the table.
 
 
 ## Citation

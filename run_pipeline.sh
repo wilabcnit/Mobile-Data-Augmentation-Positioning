@@ -23,3 +23,6 @@ echo "== 6. Positioning =="
 python positioning/train.py all
 python positioning/test.py
 python positioning/knn_k_ablation.py          # radio KNN K = 1..5: validation + test positioning
+
+echo "== 7. Synthetic data generation time (A = 10, 20, 30) =="
+python benchmark_complexity.py
