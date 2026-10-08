@@ -11,6 +11,7 @@ for m in kde gmm gan nf; do python train/spatial/$m.py; done
 
 echo "== 3. Radio models =="
 python train/radio/knn_k_ablation.py          # K = 1..5 on the validation set
+python test/radio/knn_k_positioning.py        # K = 1..5 positioning on the test set
 for m in knn rf mlp cgan nf rec_flow gpr_se gpr_rq; do python train/radio/$m.py; done
 
 echo "== 4. Model evaluation (test set) =="

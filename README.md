@@ -35,7 +35,7 @@ pip install torch numpy pandas scikit-learn scipy joblib tabulate
 │       └── knn_k_ablation.py   # radio KNN, K = 1..5 on the validation set
 ├── test/                       # Model evaluation on the test set
 │   ├── spatial/                # 1-D and 2-D (Fasano-Franceschini) KS tests
-│   └── radio/                  # radio MAE
+│   └── radio/                  # radio MAE; knn_k_positioning.py: K = 1..5 on the test set
 ├── generate/
 │   └── full_pipeline.py        # synthetic MDT generation (spatial model -> radio model)
 ├── positioning/
@@ -150,6 +150,20 @@ All numbers below are on the **test set** (2,000 measurements), produced by `run
 | 5 | 3.28 | 5.68 |
 
 K = 1 gives the lowest radio error and the lowest downstream positioning error: copying the nearest real fingerprint keeps its exact set of served / not-served cells, whereas averaging K > 1 neighbours mixes RSRP values with the -160 not-served value.
+
+### Radio KNN: K = 1..5 positioning on the test set
+
+`python test/radio/knn_k_positioning.py` — KDE positions + radio KNN with K = 1..5, wKNN trained on real + synthetic data, median positioning error on the test set (K itself is selected on the validation set above).
+
+| Radio KNN | Median error (m) | vs original data (5.153 m), 95 % CI | K = 1 minus this K, 95 % CI |
+| :--- | :--- | :--- | :--- |
+| **K = 1** | **5.182** | +0.029 [-0.159, 0.144] | – |
+| K = 2 | 5.375 | +0.222 [0.080, 0.352] | **-0.193 [-0.369, -0.087]** |
+| K = 3 | 5.350 | +0.197 [0.017, 0.313] | **-0.168 [-0.337, -0.002]** |
+| K = 4 | 5.294 | +0.141 [-0.013, 0.262] | -0.112 [-0.300, 0.046] |
+| K = 5 | 5.315 | +0.162 [0.002, 0.283] | -0.132 [-0.318, 0.035] |
+
+K = 1 gives the lowest median error; it is significantly lower than K = 2 and K = 3 (bold: CI excludes 0). With K ≥ 2 the averaged fingerprints mix RSRP values with the -160 not-served value and the error increases above that of the original data.
 
 ### Spatial models: two-sample KS tests (generated vs test positions)
 
