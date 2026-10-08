@@ -21,17 +21,16 @@ mdt_augmentation/
 │   └── positioning/            # wKNN positioning models
 ├── train/                      # Training scripts
 │   ├── spatial/
-│   └── radio/
-│       └── knn_k_ablation.py   # radio KNN, K = 1..5 (validation set)
+│   └── radio/                  # knn.py trains K = 1 (pipeline) and K = 2..5 (ablation)
 ├── test/                       # Evaluation scripts
 │   ├── spatial/                # 1-D and 2-D (Fasano-Franceschini) KS tests
-│   └── radio/                  # radio MAE
-│       └── knn_k_positioning.py   # radio KNN, K = 1..5 (test set)
+│   └── radio/                  # radio MAE (knn.py: K = 1..5)
 ├── generate/                   # Synthetic data generator using trained modules
 │   └── full_pipeline.py
 ├── positioning/                # Positioning algorithm
 │   ├── train.py
-│   └── test.py
+│   ├── test.py
+│   └── knn_k_ablation.py       # radio KNN K = 1..5: validation / test positioning
 ├── benchmark/
 │   └── generation_time.py      # synthetic data generation time
 ├── utils/
@@ -147,7 +146,7 @@ KDE + KNN reduces the median error from 5.153 m to 4.921 m, and KNN is the best 
 
 ### Radio KNN: K ablation
 
-K is selected on the validation set (`python train/radio/knn_k_ablation.py`); `python test/radio/knn_k_positioning.py` reports the same comparison on the test set (KDE positions, real + synthetic data, median positioning error).
+`python train/radio/knn.py` trains the radio KNN for K = 1..5 and `python test/radio/knn.py` reports their radio MAE. `python positioning/knn_k_ablation.py` reports the median positioning error (KDE positions, real + synthetic data) on the validation set, where K is selected, and on the test set.
 
 | K | Validation (m) | Test (m) |
 | :--- | :--- | :--- |

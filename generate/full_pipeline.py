@@ -78,6 +78,11 @@ def load_radio_model(model_type):
 
 UNSERVED_RSRP = -160
 
+KNN_K_VALUES = (1, 2, 3, 4, 5)   # radio KNN: K = 1 is used by the pipeline; K = 2..5 for the ablation
+
+def knn_model_path(k):
+    return 'models/radio/knn.pkl' if k == 1 else f'models/radio/knn_k{k}.pkl'
+
 def knn_radio(radio_model, coords):
     """
     Radio KNN generation: RSRP predicted by the KNN, then the unserved-cell state of the
