@@ -140,9 +140,9 @@ wKNN trained on real + synthetic data. The KNN radio model is reported for K = 1
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Original data** | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m |
 | **KDE** | **4.921m*** | 5.063m | 5.285m | 5.359m* | 5.422m* | 5.171m | 5.201m | 5.076m | 5.146m | 5.153m | 5.518m* | 5.183m |
-| **NF** | **4.984m** | 5.175m | 5.242m | 5.109m | 5.202m | 5.136m | 5.218m | 5.008m* | 5.187m | 5.136m | 5.535m* | 5.122m |
-| **GAN** | **4.920m*** | 5.133m | 5.291m | 5.352m* | 5.332m* | 5.131m | 5.157m | 5.064m | 5.147m | 5.163m | 5.503m* | 5.178m |
-| **GMM** | **4.898m*** | 5.142m | 5.253m | 5.331m | 5.365m | 5.129m | 5.237m | 5.099m | 5.141m | 5.145m | 5.481m* | 5.138m |
+| **NF** | *4.984m* | 5.175m | 5.242m | 5.109m | 5.202m | 5.136m | 5.218m | 5.008m* | 5.187m | 5.136m | 5.535m* | 5.122m |
+| **GAN** | *4.920m* | 5.133m | 5.291m | 5.352m* | 5.332m* | 5.131m | 5.157m | 5.064m | 5.147m | 5.163m | 5.503m* | 5.178m |
+| **GMM** | *4.898m* | 5.142m | 5.253m | 5.331m | 5.365m | 5.129m | 5.237m | 5.099m | 5.141m | 5.145m | 5.481m* | 5.138m |
 
 KDE + 1NN reduces the median error from 5.153 m to 4.921 m. KNN with K = 1 is the best radio model for every spatial model; K > 1 averages RSRP values with the -160 not-served value, while K = 1 copies the nearest real fingerprint with its exact set of served / not-served cells.
 
