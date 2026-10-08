@@ -4,8 +4,10 @@ import pandas as pd
 
 def compare_models_ci(data1, data2, label1="Model 1", label2="Model 2", confidence=0.95):
     """
-    Statistically compares two distributions (e.g., positioning errors) using
-    Confidence Intervals on the difference of means.
+    Statistically compares two INDEPENDENT distributions (e.g., positioning errors measured
+    on different test sets) using Confidence Intervals on the difference of means.
+
+    If both models are evaluated on the SAME test points, use compare_models_paired instead.
     """
     n1, n2 = len(data1), len(data2)
     mean1, mean2 = np.mean(data1), np.mean(data2)
@@ -28,10 +30,48 @@ def compare_models_ci(data1, data2, label1="Model 1", label2="Model 2", confiden
         result = f"{label1} is better (lower error)"
     else:
         result = f"{label2} is better (lower error)"
-    
+
     return {
         "Comparison": f"{label1} vs {label2}",
         "Mean Difference": round(diff, 3),
-        "95% CI": (round(ci_min, 3), round(ci_max, 3)),
+        f"{confidence:.0%} CI": (round(ci_min, 3), round(ci_max, 3)),
+        "Result": result
+    }
+
+def compare_models_paired(errors1, errors2, label1="Model 1", label2="Model 2", confidence=0.95,
+                          n_boot=2000, seed=0):
+    """
+    Compares two models evaluated on the SAME test points (errors1[i] and errors2[i] refer
+    to the same test sample), so the comparison is paired.
+
+    Reports the Wilcoxon signed-rank test on the per-point differences and a bootstrap
+    confidence interval (resampling test points) on the difference of MEDIAN errors.
+    """
+    errors1, errors2 = np.asarray(errors1, float), np.asarray(errors2, float)
+    if errors1.shape != errors2.shape:
+        raise ValueError("Paired comparison needs errors on the same test points.")
+
+    # Identical errors everywhere: the test is undefined, there is no difference
+    p_value = stats.wilcoxon(errors1, errors2).pvalue if np.any(errors1 != errors2) else 1.0
+
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, len(errors1), size=(n_boot, len(errors1)))
+    boot = np.median(errors1[idx], axis=1) - np.median(errors2[idx], axis=1)
+    alpha = 1 - confidence
+    ci_min, ci_max = np.percentile(boot, [100 * alpha / 2, 100 * (1 - alpha / 2)])
+    diff = np.median(errors1) - np.median(errors2)
+
+    if p_value >= alpha:
+        result = "NO significant difference"
+    elif diff < 0:
+        result = f"{label1} is better (lower error)"
+    else:
+        result = f"{label2} is better (lower error)"
+
+    return {
+        "Comparison": f"{label1} vs {label2}",
+        "Median Difference": round(float(diff), 3),
+        f"{confidence:.0%} CI": (round(float(ci_min), 3), round(float(ci_max), 3)),
+        "Wilcoxon p": float(p_value),
         "Result": result
     }

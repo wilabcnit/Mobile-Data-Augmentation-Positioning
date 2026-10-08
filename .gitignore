@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+
+# KNN ablation models (re-created by train/radio/knn_k_ablation.py)
+models/radio/knn_k*.pkl
+
+# Exact GPR models store an N x N Cholesky factor (~500 MB each, above GitHub's file
+# limit): re-create them with train/radio/gpr_rq.py and train/radio/gpr_se.py
+models/radio/gpr_*.pkl

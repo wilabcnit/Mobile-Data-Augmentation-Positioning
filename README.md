@@ -11,30 +11,33 @@ This repository contains the code for the research paper: **"Improving Outdoor M
 ```
 mdt_augmentation/
 ├── data/                       # MDT datasets
-│   ├── train.csv               
-│   └── test.csv                
+│   ├── train.csv
+│   ├── validation.csv          # hyperparameter selection only
+│   └── test.csv
 ├── augm_data/                  # Output directory for synthetic MDT datasets
 ├── models/                     # Saved models
 │   ├── spatial/                # KDE, GMM, GAN, NF models
 │   ├── radio/                  # KNN, RF, GPR, MLP, cGAN, NF, ReFlow models
 │   └── positioning/            # wKNN positioning models
 ├── train/                      # Training scripts
-│   ├── spatial/                
-│   ├── radio/                  
+│   ├── spatial/
+│   ├── radio/
 ├── test/                       # Evaluation scripts(MAE)
-│   ├── spatial/                
-│   ├── radio/                                 
-│   │   └── knn_k_ablation.py   # sweeps K = 1..5 for radio KNN
+│   ├── spatial/
+│   ├── radio/
+│   │   └── knn_k_ablation.py   # sweeps K = 1..5 for radio KNN (validation set)
 ├── generate/                   # Synthetic data generator using trained modules
-│   ├── full_pipeline.py        
+│   ├── full_pipeline.py
 ├── positioning/                # Positioning algorithm
-│   ├── train.py                
-│   └── test.py                 
-├── utils/                      
-│   ├── data_loader.py          
-│   ├── metrics.py              
-│   └── stats_compare.py        
-└── generate_mock_data.py       
+│   ├── train.py
+│   └── test.py
+├── utils/
+│   ├── data_loader.py
+│   ├── metrics.py              # radio MAE, spatial 1-D / 2-D KS tests
+│   ├── ks2d_ff.py              # 2-D Fasano-Franceschini KS test
+│   ├── gpr.py                  # GPR fitting helper
+│   └── stats_compare.py        # paired / unpaired model comparison
+└── generate_mock_data.py
 
 
 ```
@@ -50,6 +53,7 @@ The project requires Python 3.8+ and the following libraries:
 * `scikit-learn`[1.6.1]
 * `scipy`[1.15.3]
 * `joblib`[1.5.1]
+* `tabulate` (results tables in `positioning/test.py`)
 
 If you do not have real MDT traces yet, generate a realistic mock dataset:
 ```bash
@@ -57,7 +61,7 @@ python generate_mock_data.py
 
 ```
 
-This creates `data/train.csv` and `data/test.csv`.
+This creates `data/train.csv`, `data/validation.csv` and `data/test.csv`. The validation set contains new users drawn from the same scenario (same hotspots and cell towers) and does not overlap with train/test; it is used only to select hyperparameters (KDE bandwidth, KNN K), never the test set.
 
 ---
 
@@ -69,8 +73,8 @@ The augmentation pipeline consists of two independent modules:
 
 **Goal:** Learn the spatial distribution of users and generate new valid locations.
 
-* **KDE:** Kernel Density Estimation (Gaussian Kernel)
-* **GMM:** Gaussian Mixture Models
+* **KDE:** Kernel Density Estimation (Gaussian Kernel), bandwidth selected by validation log-likelihood
+* **GMM:** Gaussian Mixture Models, number of components selected by BIC
 * **GAN:** Generative Adversarial Network
 * **NF:** Normalizing Flows (RealNVP architecture)
 
@@ -78,28 +82,33 @@ The augmentation pipeline consists of two independent modules:
 
 **Goal:** Learn the radio fingerprint of users and generate new valid radio fingerprints.
 
-* **KNN:** K-Nearest Neighbors Regressor **(K=1)**
+* **KNN:** K-Nearest Neighbors Regressor **(K=1)**. K=1 copies the fingerprint of the nearest real measurement, which keeps the real shadowing variability in the synthetic data; a larger K averages it out. `knn_k_ablation.py` reports the radio MAE for K = 1..5 on the validation set.
 * **RF:** Random Forest Regressor
-* **GPR-RQ:** Gaussian Process (Rational Quadratic Kernel)
-* **GPR-SE:** Gaussian Process (Squared Exponential Kernel)
+* **GPR-RQ:** Gaussian Process (Amplitude × Rational Quadratic + White noise kernel)
+* **GPR-SE:** Gaussian Process (Amplitude × Squared Exponential + White noise kernel)
 * **MLP:** Multi-Layer Perceptron
-* **cGAN:** Conditional GAN
+* **cGAN:** Conditional GAN trained with the least-squares (LSGAN) objective
 * **NF:** Normalizing Flow
 * **ReFlow:** Rectified Flow (Diffusion-based model)
+
+GPR kernel hyperparameters (amplitude, length scale, noise level) are learned by maximizing the marginal likelihood on a 2000-point subset, then the GPR is refit on all training points. The fitted GPR models are ~500 MB each, so they are not stored in the repository: re-create them with `python train/radio/gpr_rq.py` and `python train/radio/gpr_se.py`.
+
+The stochastic models (cGAN, NF, ReFlow) are evaluated both on a single draw (what the augmentation uses) and on the mean of 100 draws (their radio-map estimate, comparable to the deterministic regressors).
 
 **_Implementation Note:_** For the mock data provided here, we use a single "one-shot" training model. However, when dealing with real MDT data, models should be trained per-PCI (as done in the referenced paper) to accurately capture cell-specific signal characteristics.
 
 ### 3. Positioning
 
-The final utility is assessed by training a **Weighted KNN (wKNN)** positioning model on the augmented data and testing it on real real data.
+The final utility is assessed by training a **Weighted KNN (wKNN)** positioning model on the augmented data (real training data + synthetic data) and testing it on the real test data. Models trained on the synthetic data only are also reported (`wknn_<spatial>_<radio>_synth`).
 
 
 ### 4. Generating Augmented Data
 
-To generate a specific synthetic dataset:
+To generate a specific synthetic dataset (e.g. KDE + KNN), or all 32 combinations:
 
 ```
-python generate/full_pipeline.py
+python generate/full_pipeline.py kde knn
+python generate/full_pipeline.py all
 
 ```
 
@@ -110,12 +119,12 @@ python generate/full_pipeline.py
 To assess if the augmented data improves positioning:
 
 1. Generate data (Step 4).
-2. Train wKNN on the new CSV:
+2. Train wKNN on the new CSV (`all` trains the baseline and every available combination, real + synthetic and synthetic-only):
 ```
-python positioning/train.py
+python positioning/train.py all
 ```
 
-3. Test on test set:
+3. Test on test set (median and mean positioning error, with a paired significance test against the original data):
 ```
 python positioning/test.py
 ```

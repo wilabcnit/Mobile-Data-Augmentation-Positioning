@@ -24,6 +24,7 @@ def train_knn_radio(k):
     save_path = f'models/radio/knn_k{k}.pkl' if k != 1 else 'models/radio/knn.pkl'
     joblib.dump(knn, save_path)
     print(f"Model saved to {save_path}")
+    return save_path
 
 if __name__ == "__main__":
     train_knn_radio(k=1)

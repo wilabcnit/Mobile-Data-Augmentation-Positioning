@@ -76,14 +76,21 @@ def load_radio_model(model_type):
         
     return None, None
 
-def generate_synthetic_data(spatial_algo, radio_algo, n_samples=5000):
+SPATIAL_MODELS = ['kde', 'nf', 'gan', 'gmm']
+RADIO_MODELS = ['knn', 'mlp', 'cgan', 'gpr_rq', 'gpr_se', 'nf', 'rec_flow', 'rf']
+
+def generate_synthetic_data(spatial_algo, radio_algo, n_samples=5000, seed=42):
     print(f"Running Augmentation Pipeline: Spatial[{spatial_algo}] -> Radio[{radio_algo}]")
+    
+    # Fixed seeds so the synthetic datasets (and the results table) are reproducible
+    np.random.seed(seed)
+    torch.manual_seed(seed)
     
     # --- 1. Generate Spatial Coords (Lat, Lon) ---
     spatial_model, s_ckpt = load_spatial_model(spatial_algo)
     
     if spatial_algo == 'kde':
-        coords = spatial_model.sample(n_samples)
+        coords = spatial_model.sample(n_samples, random_state=seed)
     elif spatial_algo == 'gmm':
         coords, _ = spatial_model.sample(n_samples)
     elif spatial_algo == 'gan':
@@ -109,7 +116,8 @@ def generate_synthetic_data(spatial_algo, radio_algo, n_samples=5000):
         # Sustain unserved cell state(rsrp=-160) for the synthetic based on nearest-neighbor original PCIs at that specific positions spatial ground truth
         rsrp[radio_model._y[radio_model.kneighbors(coords, 1)[1].flatten()] == -160] = -160
         # In real MDT : Apply shadow fading variations to served cells as required by the environment (rsrp+noise)
-        rsrp = rsrp.astype(int)     
+        # Round to the 1 dB MDT reporting resolution (astype(int) alone truncates towards 0)
+        rsrp = np.rint(rsrp).astype(int)
     elif radio_algo in sklearn_models:
         rsrp = radio_model.predict(coords)
         
@@ -156,4 +164,13 @@ def generate_synthetic_data(spatial_algo, radio_algo, n_samples=5000):
     return out_path
 
 if __name__ == "__main__":
-    generate_synthetic_data('kde', 'knn', n_samples=2000)
+    # Usage: python generate/full_pipeline.py [spatial radio | all]   (default: kde knn)
+    args = sys.argv[1:]
+    if args == ['all']:
+        combos = [(s, r) for s in SPATIAL_MODELS for r in RADIO_MODELS]
+    elif len(args) == 2:
+        combos = [tuple(args)]
+    else:
+        combos = [('kde', 'knn')]
+    for spatial_algo, radio_algo in combos:
+        generate_synthetic_data(spatial_algo, radio_algo, n_samples=2000)

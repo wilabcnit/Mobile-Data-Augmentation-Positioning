@@ -10,7 +10,7 @@ from utils.data_loader import load_mdt_data
 from models.radio.definitions import RadioGenerator, RadioDiscriminator
 
 def train_cgan_radio(epochs=500, batch_size=64, lr=0.0002):
-    print("Training Radio cGAN...")
+    print("Training Radio cGAN (least-squares objective)...")
     
     # 1. Load & Normalize Data
     coords, rsrps = load_mdt_data('data/train.csv', mode='radio')
@@ -35,6 +35,7 @@ def train_cgan_radio(epochs=500, batch_size=64, lr=0.0002):
     
     opt_G = optim.Adam(G.parameters(), lr=lr)
     opt_D = optim.Adam(D.parameters(), lr=lr)
+    # Least-squares GAN (LSGAN) objective: MSE between D output and the 0/1 labels
     criterion = nn.MSELoss() 
     
     # 3. Train
@@ -42,7 +43,7 @@ def train_cgan_radio(epochs=500, batch_size=64, lr=0.0002):
         for real_cond, real_data in dataloader:
             batch_len = real_cond.size(0)
             
-            # --- Train Plain Discriminator ---
+            # --- Train Discriminator (LSGAN loss) ---
             opt_D.zero_grad()
             
             valid = torch.ones(batch_len, 1)
@@ -58,7 +59,7 @@ def train_cgan_radio(epochs=500, batch_size=64, lr=0.0002):
             d_loss.backward()
             opt_D.step()
             
-            # --- Train Plain Generator ---
+            # --- Train Generator (LSGAN loss) ---
             opt_G.zero_grad()
             g_fake = D(fake_data, real_cond)
             g_loss = criterion(g_fake, valid)

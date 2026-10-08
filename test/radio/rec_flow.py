@@ -7,7 +7,7 @@ from utils.data_loader import load_mdt_data
 from utils.metrics import calculate_radio_mae
 from models.radio.definitions import VelocityField
 
-def test_reflow_radio():
+def test_reflow_radio(n_draws=100):
     print("Testing Radio Rectified Flow...")
     
     if not os.path.exists('models/radio/rec_flow.pth'):
@@ -28,21 +28,28 @@ def test_reflow_radio():
     steps = 20 # Number of Euler steps
     dt = 1.0 / steps
     
+    # ReFlow is stochastic: report the MAE of one draw (what the augmentation uses) and the
+    # MAE of the mean over n_draws (its radio-map estimate, comparable to KNN/RF/GPR/MLP)
+    draws = []
     with torch.no_grad():
-        # Start from Noise x0
-        x = torch.randn(coords.size(0), 30)
-        
-        for i in range(steps):
-            t_value = i * dt
-            t = torch.ones(coords.size(0), 1) * t_value
+        for _ in range(n_draws):
+            # Start from Noise x0
+            x = torch.randn(coords.size(0), 30)
             
-            v = model(x, t, coords_norm)
-            x = x + v * dt
+            for i in range(steps):
+                t_value = i * dt
+                t = torch.ones(coords.size(0), 1) * t_value
+                
+                v = model(x, t, coords_norm)
+                x = x + v * dt
+            draws.append(x)
             
-    preds_rsrp = x * checkpoint['std_x'] + checkpoint['mean_x']
+    draws_rsrp = torch.stack(draws) * checkpoint['std_x'] + checkpoint['mean_x']
     
-    mae = calculate_radio_mae(real_rsrps.numpy(), preds_rsrp.numpy())
-    print(f"ReFlow Radio MAE: {mae:.4f} dBm")
+    mae_single = calculate_radio_mae(real_rsrps.numpy(), draws_rsrp[0].numpy())
+    mae_mean = calculate_radio_mae(real_rsrps.numpy(), draws_rsrp.mean(dim=0).numpy())
+    print(f"ReFlow Radio MAE (single draw): {mae_single:.4f} dBm")
+    print(f"ReFlow Radio MAE (mean of {n_draws} draws): {mae_mean:.4f} dBm")
 
 if __name__ == "__main__":
     test_reflow_radio()
