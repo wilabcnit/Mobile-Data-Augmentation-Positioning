@@ -7,7 +7,7 @@ from utils.data_loader import load_mdt_data
 from utils.metrics import calculate_radio_mae
 from models.radio.definitions import RadioNF
 
-def test_nf_radio(n_draws=100):
+def test_nf_radio():
     torch.manual_seed(0)  # reproducible random draws
     print("Testing Radio NF...")
     
@@ -25,18 +25,16 @@ def test_nf_radio(n_draws=100):
     coords, real_rsrps = load_mdt_data('data/test.csv', mode='radio')
     coords_norm = (coords - checkpoint['mean_c']) / checkpoint['std_c']
     
-    # NF is stochastic: report the MAE of one draw (what the augmentation uses) and the
-    # MAE of the mean over n_draws (its radio-map estimate, comparable to KNN/RF/GPR/MLP)
     with torch.no_grad():
-        # Sample z from prior, then inverse: z, c -> x
-        draws = torch.stack([flow.inverse(torch.randn(coords.size(0), n_cells), coords_norm) for _ in range(n_draws)])
+        # Sample z from prior
+        z = torch.randn(coords.size(0), n_cells)
+        # Inverse: z, c -> x
+        preds_norm = flow.inverse(z, coords_norm)
         
-    draws_rsrp = draws * checkpoint['std_x'] + checkpoint['mean_x']
+    preds_rsrp = preds_norm * checkpoint['std_x'] + checkpoint['mean_x']
     
-    mae_single = calculate_radio_mae(real_rsrps.numpy(), draws_rsrp[0].numpy())
-    mae_mean = calculate_radio_mae(real_rsrps.numpy(), draws_rsrp.mean(dim=0).numpy())
-    print(f"NF Radio MAE (single draw): {mae_single:.4f} dB")
-    print(f"NF Radio MAE (mean of {n_draws} draws): {mae_mean:.4f} dB")
+    mae = calculate_radio_mae(real_rsrps.numpy(), preds_rsrp.numpy())
+    print(f"NF Radio MAE: {mae:.4f} dB")
 
 if __name__ == "__main__":
     test_nf_radio()
