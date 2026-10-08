@@ -9,6 +9,7 @@ from utils.metrics import calculate_spatial_ks
 from models.spatial.definitions import SpatialNF
 
 def test_nf():
+    torch.manual_seed(0)  # reproducible random draws
     print("Testing Spatial Normalizing Flow...")
     
     if not os.path.exists('models/spatial/nf.pth'):

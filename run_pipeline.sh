@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # End-to-end reproduction: mock data -> spatial/radio models -> synthetic data ->
-# positioning -> evaluation -> complexity benchmark. Run from the repository root.
+# positioning -> evaluation. Run from the repository root.
 set -euo pipefail
 
 echo "== 1. Mock MDT data (70/10/20 train/validation/test) =="
@@ -23,6 +23,3 @@ echo "== 6. Positioning =="
 python positioning/train.py all
 python positioning/test.py
 python positioning/knn_k_ablation.py          # radio KNN K = 1..5: validation + test positioning
-
-echo "== 7. Generation time vs augmentation rate (Table IX) =="
-python benchmark/generation_time.py

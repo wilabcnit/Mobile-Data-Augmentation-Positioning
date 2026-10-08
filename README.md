@@ -31,8 +31,6 @@ mdt_augmentation/
 │   ├── train.py
 │   ├── test.py
 │   └── knn_k_ablation.py       # radio KNN K = 1..5: validation / test positioning
-├── benchmark/
-│   └── generation_time.py      # synthetic data generation time
 ├── utils/
 │   ├── data_loader.py
 │   ├── geo.py                  # haversine distance, lat/lon -> metres
@@ -132,33 +130,23 @@ python positioning/test.py
 ---
 ## Performance Evaluation
 
-Median positioning error on the real test set (2,000 measurements), wKNN trained on real + synthetic data. `*` = significantly different from the original data (paired bootstrap 95 % confidence interval of the median difference excludes 0).
+All results are on the real **test set** (2,000 measurements). `*` = significantly different from the original data (paired bootstrap 95 % confidence interval of the median difference excludes 0).
 
-| Spatial \ Radio | KNN | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m |
-| **KDE** | 4.921m* | 5.171m | 5.201m | 5.076m | 5.146m | 5.153m | 5.518m* | 5.183m |
-| **NF** | 4.984m | 5.136m | 5.218m | 5.008m* | 5.187m | 5.136m | 5.535m* | 5.122m |
-| **GAN** | 4.920m* | 5.131m | 5.157m | 5.064m | 5.147m | 5.163m | 5.503m* | 5.178m |
-| **GMM** | 4.898m* | 5.129m | 5.237m | 5.099m | 5.141m | 5.145m | 5.481m* | 5.138m |
+### Positioning: median error (m)
 
-KDE + KNN reduces the median error from 5.153 m to 4.921 m, and KNN is the best radio model for every spatial model.
+wKNN trained on real + synthetic data. The KNN radio model is reported for K = 1 (proposed, `python positioning/test.py`) and K = 2..5 (`python positioning/knn_k_ablation.py`).
 
-### Radio KNN: K ablation (all spatial models)
+| Spatial \ Radio | KNN K=1 | KNN K=2 | KNN K=3 | KNN K=4 | KNN K=5 | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Original data** | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m |
+| **KDE** | **4.921m*** | 5.063m | 5.285m | 5.359m* | 5.422m* | 5.171m | 5.201m | 5.076m | 5.146m | 5.153m | 5.518m* | 5.183m |
+| **NF** | **4.984m** | 5.175m | 5.242m | 5.109m | 5.202m | 5.136m | 5.218m | 5.008m* | 5.187m | 5.136m | 5.535m* | 5.122m |
+| **GAN** | **4.920m*** | 5.133m | 5.291m | 5.352m* | 5.332m* | 5.131m | 5.157m | 5.064m | 5.147m | 5.163m | 5.503m* | 5.178m |
+| **GMM** | **4.898m*** | 5.142m | 5.253m | 5.331m | 5.365m | 5.129m | 5.237m | 5.099m | 5.141m | 5.145m | 5.481m* | 5.138m |
 
-`python train/radio/knn.py` trains the radio KNN for K = 1..5 and `python test/radio/knn.py` reports their radio MAE. `python positioning/knn_k_ablation.py` reports the median positioning error (real + synthetic data) for every spatial model and K, on the validation set (where K is selected) and on the test set.
+KDE + 1NN reduces the median error from 5.153 m to 4.921 m. KNN with K = 1 is the best radio model for every spatial model; K > 1 averages RSRP values with the -160 not-served value, while K = 1 copies the nearest real fingerprint with its exact set of served / not-served cells.
 
-**Test set** (`*` = significantly different from the original data, paired bootstrap 95 % CI):
-
-| Spatial \ Radio KNN | K=1 | K=2 | K=3 | K=4 | K=5 |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m |
-| **KDE** | **4.921m*** | 5.063m | 5.285m | 5.359m* | 5.422m* |
-| **NF** | **4.984m** | 5.175m | 5.242m | 5.109m | 5.202m |
-| **GAN** | **4.920m*** | 5.133m | 5.291m | 5.352m* | 5.332m* |
-| **GMM** | **4.898m*** | 5.142m | 5.253m | 5.331m | 5.365m |
-
-**Validation set:**
+K is selected on the **validation set** (median positioning error, `python positioning/knn_k_ablation.py`): K = 1 is the best for every spatial model.
 
 | Spatial \ Radio KNN | K=1 | K=2 | K=3 | K=4 | K=5 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -168,21 +156,35 @@ KDE + KNN reduces the median error from 5.153 m to 4.921 m, and KNN is the best 
 | **GAN** | **5.243m** | 5.363m | 5.253m | 5.452m | 5.564m |
 | **GMM** | **5.067m** | 5.373m | 5.696m | 5.694m | 5.751m |
 
-K = 1 gives the lowest positioning error for every spatial model, on both the validation and the test set. K = 1 copies the nearest real fingerprint with its exact set of served / not-served cells, whereas K > 1 averages RSRP values with the -160 not-served value.
+### Radio models: mean absolute error (dB)
 
-### Synthetic data generation time
+RSRP predicted at the test positions vs real RSRP (`python test/radio/<model>.py`). For the stochastic models (cGAN, NF, ReFlow): single draw and mean of 100 draws.
 
-`python benchmark/generation_time.py`: KDE sampling + radio model inference for A × the real training size (A = augmentation rate), median of 5 runs (Intel Xeon 2.8 GHz, 4 CPUs).
+| Radio model | MAE (dB) | MAE, mean of 100 draws (dB) |
+| :--- | :--- | :--- |
+| **KNN K=1** | **2.527** | – |
+| KNN K=2 | 2.763 | – |
+| KNN K=3 | 2.965 | – |
+| KNN K=4 | 3.158 | – |
+| KNN K=5 | 3.324 | – |
+| GPR-RQ | 3.165 | – |
+| RF | 3.759 | – |
+| GPR-SE | 5.094 | – |
+| MLP | 8.979 | – |
+| cGAN | 12.781 | 11.298 |
+| ReFlow | 12.764 | 10.962 |
+| NF | 24.352 | 13.581 |
 
-| Model | A = 10 | A = 20 | A = 30 |
+### Spatial models: Kolmogorov-Smirnov tests
+
+Generated vs real test positions (`python test/spatial/<model>.py`). A mean absolute error is not defined for the spatial models (a generated position has no paired true position), so their distributions are compared with the two-sample KS test: 1-D on latitude and longitude, and 2-D Fasano-Franceschini (p-value from 1,000 permutations). Lower statistic / higher p = closer to the real distribution.
+
+| Spatial model | KS latitude (p) | KS longitude (p) | 2-D KS (p) |
 | :--- | :--- | :--- | :--- |
-| KDE-1NN (Proposed) | 0.120 s | 0.294 s | 0.346 s |
-| KDE-RF | 0.125 s | 0.357 s | 0.476 s |
-| KDE-GPR (RQ) | 22.424 s | 46.162 s | 68.371 s |
-| KDE-MLP | 0.109 s | 0.264 s | 0.398 s |
-| KDE-CGAN | 0.091 s | 0.222 s | 0.307 s |
-| KDE-ReFlow | 3.093 s | 5.921 s | 8.319 s |
-| KDE-NF | 0.146 s | 0.625 s | 0.862 s |
+| **KDE** | 0.032 (0.258) | 0.035 (0.173) | 0.049 (0.126) |
+| NF | 0.026 (0.534) | 0.044 (0.042) | 0.047 (0.151) |
+| GMM | 0.074 (<0.001) | 0.061 (0.001) | 0.092 (0.001) |
+| GAN | 0.183 (<0.001) | 0.101 (<0.001) | 0.207 (0.001) |
 
 ## Citation
 

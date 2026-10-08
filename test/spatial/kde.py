@@ -22,7 +22,7 @@ def test_kde():
     n_samples = len(real_data)
     
     # 3. Generate Synthetic Data
-    generated_data = kde.sample(n_samples)
+    generated_data = kde.sample(n_samples, random_state=0)
     
     # 4. Evaluate
     results = calculate_spatial_ks(real_data, generated_data)

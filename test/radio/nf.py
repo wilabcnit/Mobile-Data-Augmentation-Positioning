@@ -8,6 +8,7 @@ from utils.metrics import calculate_radio_mae
 from models.radio.definitions import RadioNF
 
 def test_nf_radio(n_draws=100):
+    torch.manual_seed(0)  # reproducible random draws
     print("Testing Radio NF...")
     
     if not os.path.exists('models/radio/nf.pth'):

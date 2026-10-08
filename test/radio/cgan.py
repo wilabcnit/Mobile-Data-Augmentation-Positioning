@@ -8,6 +8,7 @@ from utils.metrics import calculate_radio_mae
 from models.radio.definitions import RadioGenerator
 
 def test_cgan_radio(n_draws=100):
+    torch.manual_seed(0)  # reproducible random draws
     print("Testing Radio cGAN...")
     
     if not os.path.exists('models/radio/cgan.pth'):

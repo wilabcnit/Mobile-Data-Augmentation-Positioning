@@ -9,6 +9,7 @@ from utils.metrics import calculate_spatial_ks
 from models.spatial.definitions import SpatialGenerator
 
 def test_gan():
+    torch.manual_seed(0)  # reproducible random draws
     print("Testing Spatial GAN...")
     
     if not os.path.exists('models/spatial/gan.pth'):

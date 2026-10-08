@@ -8,6 +8,7 @@ from utils.metrics import calculate_radio_mae
 from models.radio.definitions import VelocityField
 
 def test_reflow_radio(n_draws=100):
+    torch.manual_seed(0)  # reproducible random draws
     print("Testing Radio Rectified Flow...")
     
     if not os.path.exists('models/radio/rec_flow.pth'):
