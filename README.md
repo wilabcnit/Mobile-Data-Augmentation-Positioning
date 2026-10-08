@@ -82,7 +82,7 @@ The augmentation pipeline consists of two independent modules:
 
 **Goal:** Learn the radio fingerprint of users and generate new valid radio fingerprints.
 
-* **KNN:** K-Nearest Neighbors Regressor **(K=1)**. K=1 copies the fingerprint of the nearest real measurement, which keeps the real shadowing variability in the synthetic data; a larger K averages it out. `knn_k_ablation.py` reports the radio MAE for K = 1..5 on the validation set.
+* **KNN:** K-Nearest Neighbors Regressor (inverse-distance weighted, **K=10**). K is selected by `knn_k_ablation.py`, which reports, for K = 1, 2, 3, 5, 10, 20, the radio MAE and the downstream median positioning error on the **validation** set (wKNN trained on real + KDE/KNN synthetic data), and keeps the K with the lowest validation positioning error. On the mock data the validation errors are 51.7 m (K=1), 48.0 (K=2), 49.0 (K=3), 47.0 (K=5), **46.4 (K=10)** and 47.3 m (K=20).
 * **RF:** Random Forest Regressor
 * **GPR-RQ:** Gaussian Process (Amplitude × Rational Quadratic + White noise kernel)
 * **GPR-SE:** Gaussian Process (Amplitude × Squared Exponential + White noise kernel)
@@ -131,14 +131,29 @@ python positioning/test.py
 
 ---
 ## Performance Evaluation
-synthetic data was generated using the generate_mock_data.py script. The positioning performance was then tested across all model combinations. The results below represent the Median Positioning Error achieved during this test run:
+Synthetic data was generated with the `generate_mock_data.py` script and the positioning performance was tested across all model combinations (2000 synthetic samples per combination, fixed seeds). The tables report the **median** positioning error on the real test set (2000 points). `*` marks a significant difference from the original data (paired Wilcoxon signed-rank test, p < 0.05).
+
+**wKNN trained on real + synthetic data (augmentation):**
+
 | Spatial \ Radio | KNN | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 56.056m | 56.056m | 56.056m | 56.056m | 56.056m | 56.056m | 56.056m | 56.056m |
-| **KDE** | 53.349m | 53.831m | 69.027m | 56.958m | 58.042m | 58.554m | 56.732m | 61.856m |
-| **NF** | 53.589m | 54.155m | 72.454m | 71.327m | 58.707m | 60.024m | 58.010m | 59.841m |
-| **GAN** | 76.466m | 61.902m | 87.227m | 85.546m | 86.235m | 84.371m | 81.912m | 84.790m |
-| **GMM** | 64.819m | 55.230m | 82.116m | 97.033m | 63.156m | 73.211m | 70.241m | 73.711m |
+| **Original data** | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m |
+| **KDE** | 45.825m* | 48.030m* | 50.787m* | 45.838m* | 45.838m* | 49.685m | 49.136m | 46.724m* |
+| **NF** | 45.902m* | 47.226m* | 50.884m* | 46.011m* | 45.864m* | 49.989m | 49.628m | 44.738m* |
+| **GAN** | 50.873m* | 48.129m* | 51.334m* | 48.258m* | 48.257m* | 50.324m* | 51.266m | 50.741m* |
+| **GMM** | 44.807m* | 47.606m* | 50.727m* | 46.009m* | 46.217m* | 49.048m* | 48.818m | 45.029m* |
+
+**wKNN trained on synthetic data only:**
+
+| Spatial \ Radio | KNN | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Original data** | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m |
+| **KDE** | 45.920m* | 50.490m | 62.604m* | 46.226m* | 46.113m* | 53.801m* | 51.622m | 46.063m* |
+| **NF** | 45.940m* | 50.017m | 62.204m* | 46.072m* | 46.214m* | 53.429m* | 52.731m* | 45.016m* |
+| **GAN** | 62.932m* | 55.152m* | 80.539m* | 52.520m* | 52.726m* | 75.591m* | 75.605m* | 67.278m* |
+| **GMM** | 44.528m* | 49.478m* | 64.690m* | 46.008m* | 46.146m* | 51.234m* | 50.505m | 44.578m* |
+
+With augmentation, KDE + KNN reduces the median error from 49.99 m to 45.83 m (mean: 56.06 m → 50.83 m). The best combinations (NF + RF 44.74 m, GMM + KNN 44.81 m, GMM + RF 45.03 m, KDE + KNN 45.83 m) are not significantly different from KDE + KNN (paired Wilcoxon p ≥ 0.05; 95% bootstrap CIs on the median difference include 0). `python positioning/test.py` also prints the mean errors.
 
 ## Citation
 
