@@ -6,12 +6,10 @@ import numpy as np
 from tabulate import tabulate
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
-from generate.full_pipeline import SPATIAL_MODELS, RADIO_MODELS
-from utils.stats_compare import compare_models_paired
 from utils.geo import haversine_distance
+from utils.stats_compare import compare_models_paired
 
-def positioning_errors(model_name):
-    """Returns the per-point positioning errors on the ORIGINAL test set, or None if the model does not exist."""
+def test_positioning(model_name):
     model_path = f'models/positioning/{model_name}.pkl'
     if not os.path.exists(model_path):
         return None
@@ -28,42 +26,42 @@ def positioning_errors(model_name):
     # 3. Predict Locations
     y_pred = wknn.predict(X_test)
 
-    # 4. Calculate Positioning Error (great-circle distance in metres between WGS84 positions)
-    return haversine_distance(y_pred, y_test)
+    # 4. Calculate Positioning Error (metres between WGS84 positions)
+    errors = haversine_distance(y_pred, y_test)
 
-def test_positioning(model_name):
-    errors = positioning_errors(model_name)
-    if errors is None:
-        return None
     return {
         "median": np.median(errors),
         "errors": errors
     }
 
-def print_table(title, baseline):
-    """Median positioning error of every spatial x radio combination."""
-    header = ["Spatial \\ Radio"] + [r.upper() for r in RADIO_MODELS]
-    rows = [["Original data"] + [f"{baseline['median']:.3f}m" if baseline else "X"] * len(RADIO_MODELS)]
-    for s in SPATIAL_MODELS:
-        row = [s.upper()]
-        for r in RADIO_MODELS:
-            res = test_positioning(f"wknn_{s}_{r}")
-            if res is None:
-                row.append("X")
-                continue
-            cell = f"{res['median']:.3f}m"
-            # '*': median significantly different from the baseline (paired bootstrap 95% CI)
-            if baseline and compare_models_paired(res['errors'], baseline['errors'])["Significant"]:
-                cell += "*"
-            row.append(cell)
-        rows.append(row)
-    print("\n" + "="*100)
-    print(f"{title:^100}")
-    print("="*100)
-    print(tabulate(rows, headers=header, tablefmt="grid"))
-
 if __name__ == "__main__":
     # Results Print
+    spatial_models = ['baseline', 'kde', 'nf', 'gan', 'gmm']
+    radio_models = ['knn', 'mlp', 'cgan', 'gpr_rq', 'gpr_se', 'nf', 'rec_flow', 'rf']
+    header = ["Spatial \\ Radio"] + [r.upper() for r in radio_models]
+    rows = []
+    print("\n" + "="*100)
+    print(f"{'POSITIONING PERFORMANCE (MEDIAN ERROR) - wKNN TRAINED ON REAL + SYNTHETIC MDT DATA':^100}")
+    print("="*100)
     baseline = test_positioning('wknn_baseline')
-    print_table("MEDIAN POSITIONING ERROR - wKNN TRAINED ON REAL + SYNTHETIC MDT DATA", baseline)
-    print("* median error significantly different from the original data (paired bootstrap 95% CI on the median difference excludes 0)")
+    for s in spatial_models:
+        if s == 'baseline':
+            val = f"{baseline['median']:.3f}m" if baseline else "X"
+            rows.append(["Original data"] + [val] * (len(radio_models)))
+            continue
+
+        row = [s.upper()]
+        for r in radio_models:
+            res = test_positioning(f"wknn_{s}_{r}")
+
+            if res:
+                cell = f"{res['median']:.3f}m"
+                # '*': median significantly different from the original data (paired bootstrap 95% CI)
+                if baseline and compare_models_paired(res['errors'], baseline['errors'])["Significant"]:
+                    cell += "*"
+                row.append(cell)
+            else:
+                row.append("X")
+        rows.append(row)
+    print(tabulate(rows, headers=header, tablefmt="grid"))
+    print("* median error significantly different from the original data (paired bootstrap 95% CI excludes 0)")

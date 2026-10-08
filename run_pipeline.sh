@@ -25,6 +25,5 @@ echo "== 6. Positioning =="
 python positioning/train.py all
 python positioning/test.py
 
-echo "== 7. Complexity benchmark =="
-python benchmark/complexity.py
+echo "== 7. Generation time vs augmentation rate (Table IX) =="
 python benchmark/generation_time.py
