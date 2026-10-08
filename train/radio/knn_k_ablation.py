@@ -5,7 +5,7 @@ from utils.data_loader import load_mdt_data
 from utils.metrics import calculate_radio_mae
 import joblib
 import numpy as np
-from sklearn.neighbors import KNeighborsRegressor
+from positioning.train import build_wknn
 
 def validation_positioning_error(knn, kde, train_df, val_df, n_samples=2000, seed=42):
     """
@@ -16,7 +16,7 @@ def validation_positioning_error(knn, kde, train_df, val_df, n_samples=2000, see
     rsrp_cols = [c for c in train_df.columns if 'RSRP' in c]
     X = np.vstack([train_df[rsrp_cols].values, knn.predict(coords)])
     y = np.vstack([train_df[['LATITUDE', 'LONGITUDE']].values, coords])
-    wknn = KNeighborsRegressor(n_neighbors=3, weights='distance', metric='euclidean').fit(X, y)
+    wknn = build_wknn().fit(X, y)
     errors = np.linalg.norm(wknn.predict(val_df[rsrp_cols].values) - val_df[['LATITUDE', 'LONGITUDE']].values, axis=1)
     return np.median(errors)
 

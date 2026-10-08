@@ -82,7 +82,7 @@ The augmentation pipeline consists of two independent modules:
 
 **Goal:** Learn the radio fingerprint of users and generate new valid radio fingerprints.
 
-* **KNN:** K-Nearest Neighbors Regressor (inverse-distance weighted, **K=10**). K is selected by `knn_k_ablation.py`, which reports, for K = 1, 2, 3, 5, 10, 20, the radio MAE and the downstream median positioning error on the **validation** set (wKNN trained on real + KDE/KNN synthetic data), and keeps the K with the lowest validation positioning error. On the mock data the validation errors are 51.7 m (K=1), 48.0 (K=2), 49.0 (K=3), 47.0 (K=5), **46.4 (K=10)** and 47.3 m (K=20).
+* **KNN:** K-Nearest Neighbors Regressor (inverse-distance weighted, **K=10**). K is selected by `knn_k_ablation.py`, which reports, for K = 1, 2, 3, 5, 10, 20, the radio MAE and the downstream median positioning error on the **validation** set (wKNN trained on real + KDE/KNN synthetic data), and keeps the K with the lowest validation positioning error. On the mock data the validation errors are 52.1 m (K=1), 49.5 (K=2), 48.8 (K=3), 48.2 (K=5), **47.3 (K=10)** and 48.1 m (K=20).
 * **RF:** Random Forest Regressor
 * **GPR-RQ:** Gaussian Process (Amplitude × Rational Quadratic + White noise kernel)
 * **GPR-SE:** Gaussian Process (Amplitude × Squared Exponential + White noise kernel)
@@ -99,7 +99,7 @@ The stochastic models (cGAN, NF, ReFlow) are evaluated both on a single draw (wh
 
 ### 3. Positioning
 
-The final utility is assessed by training a **Weighted KNN (wKNN)** positioning model on the augmented data (real training data + synthetic data) and testing it on the real test data. Models trained on the synthetic data only are also reported (`wknn_<spatial>_<radio>_synth`).
+The final utility is assessed by training a **Weighted KNN (wKNN, K=3, inverse Manhattan distance in RSRP space)** positioning model on the augmented data (real training data + synthetic data) and testing it on the real test data. Models trained on the synthetic data only are also reported (`wknn_<spatial>_<radio>_synth`).
 
 
 ### 4. Generating Augmented Data
@@ -131,29 +131,29 @@ python positioning/test.py
 
 ---
 ## Performance Evaluation
-Synthetic data was generated with the `generate_mock_data.py` script and the positioning performance was tested across all model combinations (2000 synthetic samples per combination, fixed seeds). The tables report the **median** positioning error on the real test set (2000 points). `*` marks a significant difference from the original data (paired Wilcoxon signed-rank test, p < 0.05).
+Synthetic data was generated with the `generate_mock_data.py` script and the positioning performance was tested across all model combinations (2000 synthetic samples per combination, fixed seeds). The tables report the **median** positioning error (Euclidean distance between estimated and true position) on the real test set (2000 points). `*` marks a significant difference from the original data (paired Wilcoxon signed-rank test, p < 0.05).
 
 **wKNN trained on real + synthetic data (augmentation):**
 
 | Spatial \ Radio | KNN | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m |
-| **KDE** | 45.825m* | 48.030m* | 50.787m* | 45.838m* | 45.838m* | 49.685m | 49.136m | 46.724m* |
-| **NF** | 45.902m* | 47.226m* | 50.884m* | 46.011m* | 45.864m* | 49.989m | 49.628m | 44.738m* |
-| **GAN** | 50.873m* | 48.129m* | 51.334m* | 48.258m* | 48.257m* | 50.324m* | 51.266m | 50.741m* |
-| **GMM** | 44.807m* | 47.606m* | 50.727m* | 46.009m* | 46.217m* | 49.048m* | 48.818m | 45.029m* |
+| **Original data** | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m |
+| **KDE** | 46.250m* | 48.901m | 50.460m* | 48.536m* | 48.539m* | 50.326m | 49.595m | 46.339m* |
+| **NF** | 46.805m* | 49.156m | 50.465m* | 48.565m | 48.646m | 49.708m | 49.575m | 47.588m* |
+| **GAN** | 51.057m* | 49.366m* | 51.254m* | 49.176m* | 49.051m* | 49.830m | 50.576m | 51.592m* |
+| **GMM** | 46.033m* | 48.328m* | 50.536m* | 48.525m* | 48.445m* | 49.401m* | 49.659m | 46.340m* |
 
 **wKNN trained on synthetic data only:**
 
 | Spatial \ Radio | KNN | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m | 49.991m |
-| **KDE** | 45.920m* | 50.490m | 62.604m* | 46.226m* | 46.113m* | 53.801m* | 51.622m | 46.063m* |
-| **NF** | 45.940m* | 50.017m | 62.204m* | 46.072m* | 46.214m* | 53.429m* | 52.731m* | 45.016m* |
-| **GAN** | 62.932m* | 55.152m* | 80.539m* | 52.520m* | 52.726m* | 75.591m* | 75.605m* | 67.278m* |
-| **GMM** | 44.528m* | 49.478m* | 64.690m* | 46.008m* | 46.146m* | 51.234m* | 50.505m | 44.578m* |
+| **Original data** | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m |
+| **KDE** | 45.971m* | 53.532m* | 64.143m* | 51.563m | 51.674m | 54.812m* | 51.506m* | 45.996m* |
+| **NF** | 46.013m* | 53.658m* | 63.750m* | 51.652m | 51.589m | 52.977m* | 51.181m* | 46.905m* |
+| **GAN** | 63.348m* | 57.725m* | 80.693m* | 55.721m* | 55.760m* | 75.874m* | 75.235m* | 66.107m* |
+| **GMM** | 45.603m* | 52.410m* | 65.415m* | 50.584m | 50.996m | 52.081m* | 51.803m* | 45.803m* |
 
-With augmentation, KDE + KNN reduces the median error from 49.99 m to 45.83 m (mean: 56.06 m → 50.83 m). The best combinations (NF + RF 44.74 m, GMM + KNN 44.81 m, GMM + RF 45.03 m, KDE + KNN 45.83 m) are not significantly different from KDE + KNN (paired Wilcoxon p ≥ 0.05; 95% bootstrap CIs on the median difference include 0). `python positioning/test.py` also prints the mean errors.
+With augmentation, KDE + KNN reduces the median error from 49.70 m to 46.25 m (mean: 54.96 m → 51.13 m; paired Wilcoxon p < 0.001). The other best combinations (GMM + KNN 46.03 m, KDE + RF 46.34 m, GMM + RF 46.34 m) are not significantly different from KDE + KNN (paired Wilcoxon p ≥ 0.05; 95% bootstrap CIs on the median difference include 0). `python positioning/test.py` also prints the mean errors.
 
 ## Citation
 

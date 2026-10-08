@@ -10,6 +10,10 @@ from generate.full_pipeline import SPATIAL_MODELS, RADIO_MODELS
 
 REAL_TRAIN_PATH = 'data/train.csv'
 
+def build_wknn():
+    """wKNN positioning model: weighted by inverse Manhattan (L1) distance in signal (RSRP) space."""
+    return KNeighborsRegressor(n_neighbors=3, weights='distance', metric='manhattan')
+
 def train_positioning(train_data_path, model_name='wknn_baseline', include_real=True):
     """
     Trains a wKNN positioning model using the specified dataset.
@@ -41,8 +45,8 @@ def train_positioning(train_data_path, model_name='wknn_baseline', include_real=
     X = df[rsrp_cols].values
     y = df[['LATITUDE', 'LONGITUDE']].values
 
-    # 2. Train wKNN (Weighted by inverse distance in signal space)
-    wknn = KNeighborsRegressor(n_neighbors=3, weights='distance', metric='euclidean')
+    # 2. Train wKNN (Weighted by inverse Manhattan distance in signal space)
+    wknn = build_wknn()
     wknn.fit(X, y)
 
     # 3. Save Model
