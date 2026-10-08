@@ -3,7 +3,8 @@ Computational complexity benchmark of the proposed pipeline (KDE spatial augment
 1NN radio augmentation + wKNN positioning), using the repository's own models and data.
 
 Each step is timed over N_RUNS repetitions (after one warm-up run) with time.perf_counter;
-the table reports mean ± standard deviation. Results are printed and saved to
+the table reports the median (robust to load spikes on shared machines) and the
+mean ± standard deviation. Results are printed and saved to
 benchmark/complexity_results.md.
 
 Usage: python benchmark/complexity.py
@@ -22,8 +23,18 @@ from utils.data_loader import load_mdt_data
 from generate.full_pipeline import knn_radio
 from positioning.train import build_wknn
 
-N_RUNS = 20
+N_RUNS = 50
 N_SYNTHETIC = 2000
+
+def cpu_model():
+    try:
+        with open('/proc/cpuinfo') as f:
+            for line in f:
+                if line.startswith('model name'):
+                    return line.split(':', 1)[1].strip()
+    except OSError:
+        pass
+    return platform.processor() or platform.machine()
 
 def timeit(fn, n_runs=N_RUNS):
     fn()  # warm-up
@@ -32,7 +43,7 @@ def timeit(fn, n_runs=N_RUNS):
         start = time.perf_counter()
         fn()
         times.append(time.perf_counter() - start)
-    return np.mean(times), np.std(times)
+    return np.median(times), np.mean(times), np.std(times)
 
 def main():
     kde = joblib.load('models/spatial/kde.pkl')
@@ -65,16 +76,17 @@ def main():
 
     rows = []
     for name, fn, n in steps:
-        mean, std = timeit(fn)
+        median, mean, std = timeit(fn)
         rows.append({"Step": name,
-                     "Total time (ms)": f"{1e3 * mean:.2f} ± {1e3 * std:.2f}",
-                     "Per sample (µs)": f"{1e6 * mean / n:.2f}"})
+                     "Median time (ms)": f"{1e3 * median:.2f}",
+                     "Mean ± std (ms)": f"{1e3 * mean:.2f} ± {1e3 * std:.2f}",
+                     "Median per sample (µs)": f"{1e6 * median / n:.2f}"})
     table = pd.DataFrame(rows)
 
-    hardware = (f"{platform.processor() or platform.machine()}, {os.cpu_count()} logical CPUs, "
+    hardware = (f"{cpu_model()}, {os.cpu_count()} logical CPUs, "
                 f"Python {platform.python_version()}, scikit-learn {sklearn.__version__}")
     header = (f"Hardware: {hardware}\n"
-              f"Data: {len(train_df)} real training fingerprints, {len(rsrp_cols)} cells; mean ± std over {N_RUNS} runs.\n")
+              f"Data: {len(train_df)} real training fingerprints, {len(rsrp_cols)} cells; {N_RUNS} timed runs per step.\n")
     markdown = header + "\n" + table.to_markdown(index=False) + "\n"
     print(markdown)
     with open(os.path.join(os.path.dirname(__file__), 'complexity_results.md'), 'w') as f:
