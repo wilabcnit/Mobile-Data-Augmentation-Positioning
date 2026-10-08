@@ -9,7 +9,7 @@ The real MDT dataset used in the paper cannot be shared. This repository runs th
 ## Quick start (end-to-end reproduction)
 
 ```bash
-pip install torch numpy pandas scikit-learn scipy joblib tabulate
+pip install -r requirements.txt
 ./run_pipeline.sh
 ```
 
@@ -59,13 +59,13 @@ pip install torch numpy pandas scikit-learn scipy joblib tabulate
 
 ## Dependencies
 
-Python 3.8+ with:
-* `torch` [2.7.1+cpu]
-* `numpy` [2.0.2]
-* `pandas` [2.3.0]
-* `scikit-learn` [1.6.1]
-* `scipy` [1.15.3]
-* `joblib` [1.5.1]
+Python 3.10+ with the versions used to train the stored models and produce the results below (`requirements.txt`; the stored scikit-learn models may not load with other scikit-learn versions):
+* `torch` [2.14.1]
+* `numpy` [2.5.3]
+* `pandas` [3.0.5]
+* `scikit-learn` [1.9.1]
+* `scipy` [1.18.1]
+* `joblib` [1.6.0]
 * `tabulate` (results tables)
 
 ---
