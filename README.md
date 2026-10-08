@@ -147,8 +147,6 @@ Generated vs real test positions (`python test/spatial/<model>.py`). A mean abso
 
 | | **KDE** | NF | GMM | GAN |
 | :--- | :--- | :--- | :--- | :--- |
-| **KS latitude (p)** | **0.032 (0.258)** | 0.026 (0.534) | 0.074 (<0.001) | 0.183 (<0.001) |
-| **KS longitude (p)** | **0.035 (0.173)** | 0.044 (0.042) | 0.061 (0.001) | 0.101 (<0.001) |
 | **2-D KS (p)** | **0.049 (0.126)** | 0.047 (0.151) | 0.092 (0.001) | 0.207 (0.001) |
 
 ### Positioning: median error (m)
