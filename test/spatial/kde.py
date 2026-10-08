@@ -22,7 +22,7 @@ def test_kde():
     n_samples = len(real_data)
     
     # 3. Generate Synthetic Data
-    generated_data = kde.sample(n_samples)
+    generated_data = kde.sample(n_samples, random_state=0)
     
     # 4. Evaluate
     results = calculate_spatial_ks(real_data, generated_data)
@@ -32,6 +32,7 @@ def test_kde():
     print(f"KS Latitude : {results['ks_lat']:.4f} (p={results['p_lat']:.4f})")
     print(f"KS Longitude: {results['ks_lon']:.4f} (p={results['p_lon']:.4f})")
     print(f"Average KS  : {results['avg_ks']:.4f}")
+    print(f"2-D KS (FF) : {results['ks_2d']:.4f} (p={results['p_2d']:.4f})")
     print("-" * 30)
 
 if __name__ == "__main__":

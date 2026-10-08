@@ -11,6 +11,7 @@ from models.radio.definitions import RadioMLP
 
 def train_mlp_radio(epochs=200, batch_size=64, lr=0.001):
     print("Training Radio MLP...")
+    torch.manual_seed(42)  # reproducible initialization, batches and noise
     
     # 1. Load Data
     coords, rsrps = load_mdt_data('data/train.csv', mode='radio')

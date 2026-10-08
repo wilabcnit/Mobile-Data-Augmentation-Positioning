@@ -1,12 +1,11 @@
 import sys
 import os
 import joblib
-import numpy as np
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, WhiteKernel
+from sklearn.gaussian_process.kernels import ConstantKernel, RBF, WhiteKernel
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from utils.data_loader import load_mdt_data
+from utils.gpr import fit_gpr
 
 def train_gpr_se():
     print("Training Radio GPR (Squared Exponential)...")
@@ -15,10 +14,10 @@ def train_gpr_se():
     X = coords.numpy()
     y = rsrps.numpy()
     
-    # Kernel: RBF (Squared Exponential)
-    kernel = 1.0 * RBF(length_scale=10.0)
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None, copy_X_train=False)
-    gpr.fit(X, y)
+    # Kernel: Amplitude * RBF (Squared Exponential) + White noise (shadowing)
+    # Initial values only; they are learned by maximizing the marginal likelihood
+    kernel = ConstantKernel(1.0) * RBF(length_scale=100.0) + WhiteKernel(noise_level=0.1)
+    gpr = fit_gpr(X, y, kernel)
     os.makedirs('models/radio', exist_ok=True)
     joblib.dump(gpr, 'models/radio/gpr_se.pkl')
     print("Model saved to models/radio/gpr_se.pkl")

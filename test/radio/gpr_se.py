@@ -19,7 +19,7 @@ def test_gpr_se():
     pred_rsrps = gpr.predict(coords.numpy())
     
     mae = calculate_radio_mae(real_rsrps.numpy(), pred_rsrps)
-    print(f"GPR-SE Radio MAE: {mae:.4f} dBm")
+    print(f"GPR-SE Radio MAE: {mae:.4f} dB")
 
 if __name__ == "__main__":
     test_gpr_se()

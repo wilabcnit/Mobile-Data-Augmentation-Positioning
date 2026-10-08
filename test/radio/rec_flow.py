@@ -8,6 +8,7 @@ from utils.metrics import calculate_radio_mae
 from models.radio.definitions import VelocityField
 
 def test_reflow_radio():
+    torch.manual_seed(0)  # reproducible random draws
     print("Testing Radio Rectified Flow...")
     
     if not os.path.exists('models/radio/rec_flow.pth'):
@@ -16,7 +17,8 @@ def test_reflow_radio():
 
     checkpoint = torch.load('models/radio/rec_flow.pth')
     
-    model = VelocityField(input_dim=30, condition_dim=2)
+    n_cells = len(checkpoint['mean_x'])
+    model = VelocityField(input_dim=n_cells, condition_dim=2)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     
@@ -30,7 +32,7 @@ def test_reflow_radio():
     
     with torch.no_grad():
         # Start from Noise x0
-        x = torch.randn(coords.size(0), 30)
+        x = torch.randn(coords.size(0), n_cells)
         
         for i in range(steps):
             t_value = i * dt
@@ -42,7 +44,7 @@ def test_reflow_radio():
     preds_rsrp = x * checkpoint['std_x'] + checkpoint['mean_x']
     
     mae = calculate_radio_mae(real_rsrps.numpy(), preds_rsrp.numpy())
-    print(f"ReFlow Radio MAE: {mae:.4f} dBm")
+    print(f"ReFlow Radio MAE: {mae:.4f} dB")
 
 if __name__ == "__main__":
     test_reflow_radio()

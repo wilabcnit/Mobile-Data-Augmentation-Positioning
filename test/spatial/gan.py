@@ -9,6 +9,7 @@ from utils.metrics import calculate_spatial_ks
 from models.spatial.definitions import SpatialGenerator
 
 def test_gan():
+    torch.manual_seed(0)  # reproducible random draws
     print("Testing Spatial GAN...")
     
     if not os.path.exists('models/spatial/gan.pth'):
@@ -16,7 +17,7 @@ def test_gan():
         return
 
     # 1. Load Checkpoint
-    checkpoint = torch.load('models/spatial/gan.pth')
+    checkpoint = torch.load('models/spatial/gan.pth', weights_only=False)
     latent_dim = checkpoint['latent_dim']
     mean = checkpoint['mean']
     std = checkpoint['std']
@@ -42,9 +43,10 @@ def test_gan():
     
     print("-" * 30)
     print(f"GAN Evaluation Results:")
-    print(f"KS Latitude : {results['ks_lat']:.4f}")
-    print(f"KS Longitude: {results['ks_lon']:.4f}")
+    print(f"KS Latitude : {results['ks_lat']:.4f} (p={results['p_lat']:.4f})")
+    print(f"KS Longitude: {results['ks_lon']:.4f} (p={results['p_lon']:.4f})")
     print(f"Average KS  : {results['avg_ks']:.4f}")
+    print(f"2-D KS (FF) : {results['ks_2d']:.4f} (p={results['p_2d']:.4f})")
     print("-" * 30)
 
 if __name__ == "__main__":

@@ -9,13 +9,14 @@ from utils.metrics import calculate_spatial_ks
 from models.spatial.definitions import SpatialNF
 
 def test_nf():
+    torch.manual_seed(0)  # reproducible random draws
     print("Testing Spatial Normalizing Flow...")
     
     if not os.path.exists('models/spatial/nf.pth'):
         print("Error: Model not found.")
         return
 
-    checkpoint = torch.load('models/spatial/nf.pth')
+    checkpoint = torch.load('models/spatial/nf.pth', weights_only=False)
     mean = checkpoint['mean']
     std = checkpoint['std']
     
@@ -38,9 +39,10 @@ def test_nf():
     
     print("-" * 30)
     print(f"NF Evaluation Results:")
-    print(f"KS Latitude : {results['ks_lat']:.4f}")
-    print(f"KS Longitude: {results['ks_lon']:.4f}")
+    print(f"KS Latitude : {results['ks_lat']:.4f} (p={results['p_lat']:.4f})")
+    print(f"KS Longitude: {results['ks_lon']:.4f} (p={results['p_lon']:.4f})")
     print(f"Average KS  : {results['avg_ks']:.4f}")
+    print(f"2-D KS (FF) : {results['ks_2d']:.4f} (p={results['p_2d']:.4f})")
     print("-" * 30)
 
 if __name__ == "__main__":

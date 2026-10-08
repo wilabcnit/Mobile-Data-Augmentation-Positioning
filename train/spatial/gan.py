@@ -12,6 +12,7 @@ from models.spatial.definitions import SpatialGenerator, SpatialDiscriminator
 
 def train_gan(epochs=1000, batch_size=64, lr=0.0002):
     print("Training Spatial GAN...")
+    torch.manual_seed(42)  # reproducible initialization, batches and noise
     
     # 1. Load Data
     data = load_mdt_data('data/train.csv', mode='spatial')
