@@ -53,8 +53,8 @@ def print_table(title, suffix, baseline, stat):
                 row.append("X")
                 continue
             cell = f"{res[stat]:.3f}m"
-            # '*': significantly different from the baseline (paired Wilcoxon, p < 0.05)
-            if baseline and compare_models_paired(res['errors'], baseline['errors'])["Wilcoxon p"] < 0.05:
+            # '*': median significantly different from the baseline (paired bootstrap 95% CI)
+            if stat == 'median' and baseline and compare_models_paired(res['errors'], baseline['errors'])["Significant"]:
                 cell += "*"
             row.append(cell)
         rows.append(row)
@@ -69,4 +69,5 @@ if __name__ == "__main__":
     print_table("MEDIAN POSITIONING ERROR - wKNN TRAINED ON REAL + SYNTHETIC MDT DATA", "", baseline, "median")
     print_table("MEDIAN POSITIONING ERROR - wKNN TRAINED ON SYNTHETIC MDT DATA ONLY", "_synth", baseline, "median")
     print_table("MEAN POSITIONING ERROR - wKNN TRAINED ON REAL + SYNTHETIC MDT DATA", "", baseline, "mean")
-    print("* significantly different from the original data (paired Wilcoxon signed-rank test, p < 0.05)")
+    print_table("MEAN POSITIONING ERROR - wKNN TRAINED ON SYNTHETIC MDT DATA ONLY", "_synth", baseline, "mean")
+    print("* median error significantly different from the original data (paired bootstrap 95% CI on the median difference excludes 0)")

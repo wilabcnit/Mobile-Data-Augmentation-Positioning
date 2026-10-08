@@ -1,159 +1,141 @@
-### **README.md**
-
 # MDT Augmentation for Improved Positioning in Mobile Networks
 
 This repository contains the code for the research paper: **"Improving Outdoor Multi-cell Fingerprinting-based Positioning via Mobile Data Augmentation."** https://arxiv.org/abs/2509.19405
+
+The real MDT dataset used in the paper cannot be shared. This repository runs the full pipeline on a **mock MDT dataset** produced by `generate_mock_data.py`; the numbers below are for that mock data and illustrate the pipeline, while the results reported in the paper come from the real MDT data.
+
+---
+
+## Quick start (end-to-end reproduction)
+
+```bash
+pip install torch numpy pandas scikit-learn scipy joblib tabulate
+./run_pipeline.sh
+```
+
+`run_pipeline.sh` runs every step in order: mock data generation → spatial and radio model training (incl. the KNN K ablation) → model evaluation → synthetic data generation (all 32 combinations) → positioning training and evaluation → complexity benchmark. Each step can also be run on its own (see below).
 
 ---
 
 ## Codebase Structure
 
 ```
-mdt_augmentation/
-├── data/                       # MDT datasets
+├── data/                       # MDT datasets (70/10/20 split)
 │   ├── train.csv
 │   ├── validation.csv          # hyperparameter selection only
 │   └── test.csv
-├── augm_data/                  # Output directory for synthetic MDT datasets
-├── models/                     # Saved models
+├── augm_data/                  # Synthetic MDT datasets (one per spatial x radio combination)
+├── models/
 │   ├── spatial/                # KDE, GMM, GAN, NF models
 │   ├── radio/                  # KNN, RF, GPR, MLP, cGAN, NF, ReFlow models
 │   └── positioning/            # wKNN positioning models
 ├── train/                      # Training scripts
 │   ├── spatial/
-│   ├── radio/
-├── test/                       # Evaluation scripts(MAE)
-│   ├── spatial/
-│   ├── radio/
-│   │   └── knn_k_ablation.py   # sweeps K = 1..5 for radio KNN (validation set)
-├── generate/                   # Synthetic data generator using trained modules
-│   ├── full_pipeline.py
-├── positioning/                # Positioning algorithm
-│   ├── train.py
-│   └── test.py
+│   └── radio/
+│       └── knn_k_ablation.py   # radio KNN, K = 1..5 on the validation set
+├── test/                       # Model evaluation on the test set
+│   ├── spatial/                # 1-D and 2-D (Fasano-Franceschini) KS tests
+│   └── radio/                  # radio MAE
+├── generate/
+│   └── full_pipeline.py        # synthetic MDT generation (spatial model -> radio model)
+├── positioning/
+│   ├── train.py                # wKNN training (real + synthetic, or synthetic only)
+│   └── test.py                 # median / mean positioning error + paired significance test
+├── benchmark/
+│   └── complexity.py           # computational complexity benchmark
 ├── utils/
 │   ├── data_loader.py
+│   ├── geo.py                  # haversine distance, lat/lon -> metres projection
 │   ├── metrics.py              # radio MAE, spatial 1-D / 2-D KS tests
-│   ├── ks2d_ff.py              # 2-D Fasano-Franceschini KS test
+│   ├── ks2d_ff.py              # 2-D Fasano-Franceschini two-sample KS test
 │   ├── gpr.py                  # GPR fitting helper
 │   └── stats_compare.py        # paired / unpaired model comparison
-└── generate_mock_data.py
-
-
+├── generate_mock_data.py
+└── run_pipeline.sh
 ```
 
 ---
 
 ## Dependencies
 
-The project requires Python 3.8+ and the following libraries:
+Python 3.8+ with:
 * `torch` [2.7.1+cpu]
-* `numpy`[2.0.2]
-* `pandas`[2.3.0]
-* `scikit-learn`[1.6.1]
-* `scipy`[1.15.3]
-* `joblib`[1.5.1]
-* `tabulate` (results tables in `positioning/test.py`)
+* `numpy` [2.0.2]
+* `pandas` [2.3.0]
+* `scikit-learn` [1.6.1]
+* `scipy` [1.15.3]
+* `joblib` [1.5.1]
+* `tabulate` (results tables)
 
-If you do not have real MDT traces yet, generate a realistic mock dataset:
+---
+
+## Mock MDT data
+
 ```bash
 python generate_mock_data.py
-
 ```
 
-This creates `data/train.csv`, `data/validation.csv` and `data/test.csv`. The validation set contains new users drawn from the same scenario (same hotspots and cell towers) and does not overlap with train/test; it is used only to select hyperparameters (KDE bandwidth, KNN K), never the test set.
+One urban scenario (city center around Bologna), 10,000 MDT measurements, 35 cells:
+
+* **Coordinates:** valid WGS84 latitude/longitude (users around hotspots, offsets from a reference point converted to degrees).
+* **Pathloss:** 3GPP TR 38.901 UMa NLOS (Table 7.4.1-1), carrier 1.8 GHz.
+* **Shadow fading:** log-normal, σ = 7.8 dB, spatially correlated (exponential autocorrelation, 50 m decorrelation distance, TR 38.901 Table 7.5-6, UMa NLOS).
+* **MDT reporting:** RSRP in the reporting range [-140, -44] dBm (TS 36.133), 1 dB resolution; each measurement reports only the detected cells (RSRP ≥ -124 dBm), at most the 8 strongest. All other cells are **not served** and stored as **-160**.
+* **Split:** 70 % train (7,000) / 10 % validation (1,000) / 20 % test (2,000). The validation set is used only for hyperparameter selection (KDE bandwidth, radio KNN K); the test set only for the final evaluation.
 
 ---
 
 ## Methodology
 
-The augmentation pipeline consists of two independent modules:
-
 ### 1. Spatial Augmentation
 
-**Goal:** Learn the spatial distribution of users and generate new valid locations.
+**Goal:** learn the spatial distribution of users and generate new valid locations.
 
-* **KDE:** Kernel Density Estimation (Gaussian Kernel), bandwidth selected by validation log-likelihood
-* **GMM:** Gaussian Mixture Models, number of components selected by BIC
-* **GAN:** Generative Adversarial Network
-* **NF:** Normalizing Flows (RealNVP architecture)
+* **KDE:** Kernel Density Estimation (Gaussian kernel); bandwidth selected by log-likelihood on the validation set, over a grid spanning 0.1 %–100 % of the coordinate spread.
+* **GMM:** Gaussian Mixture Model; number of components (1–40) selected by BIC.
+* **GAN:** Generative Adversarial Network.
+* **NF:** Normalizing Flow (RealNVP).
 
 ### 2. Radio Augmentation
 
-**Goal:** Learn the radio fingerprint of users and generate new valid radio fingerprints.
+**Goal:** learn the radio fingerprint at each location and generate new valid fingerprints.
 
-* **KNN:** K-Nearest Neighbors Regressor (inverse-distance weighted, **K=10**). K is selected by `knn_k_ablation.py`, which reports, for K = 1, 2, 3, 5, 10, 20, the radio MAE and the downstream median positioning error on the **validation** set (wKNN trained on real + KDE/KNN synthetic data), and keeps the K with the lowest validation positioning error. On the mock data the validation errors are 52.1 m (K=1), 49.5 (K=2), 48.8 (K=3), 48.2 (K=5), **47.3 (K=10)** and 48.1 m (K=20).
-* **RF:** Random Forest Regressor
-* **GPR-RQ:** Gaussian Process (Amplitude × Rational Quadratic + White noise kernel)
-* **GPR-SE:** Gaussian Process (Amplitude × Squared Exponential + White noise kernel)
-* **MLP:** Multi-Layer Perceptron
-* **cGAN:** Conditional GAN trained with the least-squares (LSGAN) objective
-* **NF:** Normalizing Flow
-* **ReFlow:** Rectified Flow (Diffusion-based model)
+* **KNN:** K-Nearest Neighbors regressor, **K = 1**, neighbours searched by distance in metres. For each synthetic position the fingerprint of the nearest real measurement is reused, **including its not-served cells (-160)**: a cell that is not served at the nearest original position is also not served at the synthetic position. `train/radio/knn_k_ablation.py` evaluates K = 1..5 on the validation set (see results).
+* **RF:** Random Forest regressor.
+* **GPR-RQ:** Gaussian Process, kernel = amplitude × Rational Quadratic + White noise.
+* **GPR-SE:** Gaussian Process, kernel = amplitude × Squared Exponential + White noise.
+* **MLP:** Multi-Layer Perceptron.
+* **cGAN:** Conditional GAN trained with the least-squares (LSGAN) objective.
+* **NF:** Conditional Normalizing Flow.
+* **ReFlow:** Rectified Flow.
 
-GPR kernel hyperparameters (amplitude, length scale, noise level) are learned by maximizing the marginal likelihood on a 2000-point subset, then the GPR is refit on all training points. The fitted GPR models are ~500 MB each, so they are not stored in the repository: re-create them with `python train/radio/gpr_rq.py` and `python train/radio/gpr_se.py`.
+GPR inputs are positions in metres; targets are normalized (`normalize_y=True`), and the kernel hyperparameters (amplitude, length scale, noise level) are learned by maximizing the marginal likelihood on a 2,000-point subset, then the GPR is refit on all training points. The fitted GPR models are large, so they are not stored in the repository: `python train/radio/gpr_rq.py` and `python train/radio/gpr_se.py` re-create them.
 
-The stochastic models (cGAN, NF, ReFlow) are evaluated both on a single draw (what the augmentation uses) and on the mean of 100 draws (their radio-map estimate, comparable to the deterministic regressors).
+The stochastic models (cGAN, NF, ReFlow) are scored both on a single draw (what the augmentation uses) and on the mean of 100 draws (their radio-map estimate, comparable to the deterministic regressors).
 
-**_Implementation Note:_** For the mock data provided here, we use a single "one-shot" training model. However, when dealing with real MDT data, models should be trained per-PCI (as done in the referenced paper) to accurately capture cell-specific signal characteristics.
+**_Implementation Note:_** For the mock data provided here, we use a single "one-shot" training model. With real MDT data, models should be trained per-PCI (as done in the paper) to capture cell-specific signal characteristics.
 
 ### 3. Positioning
 
-The final utility is assessed by training a **Weighted KNN (wKNN, K=3, inverse Manhattan distance in RSRP space)** positioning model on the augmented data (real training data + synthetic data) and testing it on the real test data. Models trained on the synthetic data only are also reported (`wknn_<spatial>_<radio>_synth`).
+A **weighted KNN (wKNN)** positioning model (K = 3, weights = inverse **Manhattan** distance between RSRP fingerprints) is trained on the **real training data + synthetic data** and tested on the real test set. Models trained on synthetic data only are also reported (`wknn_<spatial>_<radio>_synth`).
 
+The **positioning error** is the great-circle (**haversine**) distance in metres between the estimated and the true WGS84 position. The haversine distance is used only for this error; the wKNN compares fingerprints with the Manhattan distance.
 
-### 4. Generating Augmented Data
+`positioning/test.py` reports the **median** and the **mean** positioning error. A median is marked significantly different from the original data when the paired bootstrap 95 % confidence interval of the median difference (same test points, 2,000 resamples) excludes 0.
 
-To generate a specific synthetic dataset (e.g. KDE + KNN), or all 32 combinations:
+### 4. Running the steps individually
 
-```
-python generate/full_pipeline.py kde knn
-python generate/full_pipeline.py all
-
-```
-
-*Output is saved to `augm_data/`.*
-
-### 5. Training Positioning on Augmented Data
-
-To assess if the augmented data improves positioning:
-
-1. Generate data (Step 4).
-2. Train wKNN on the new CSV (`all` trains the baseline and every available combination, real + synthetic and synthetic-only):
-```
-python positioning/train.py all
-```
-
-3. Test on test set (median and mean positioning error, with a paired significance test against the original data):
-```
-python positioning/test.py
+```bash
+python generate/full_pipeline.py kde knn     # one combination -> augm_data/synthetic_kde_knn.csv
+python generate/full_pipeline.py all         # all 32 combinations
+python positioning/train.py all              # baseline + all combinations (real+synthetic and synthetic-only)
+python positioning/test.py                   # results tables
+python benchmark/complexity.py               # complexity benchmark -> benchmark/complexity_results.md
 ```
 
 ---
-## Performance Evaluation
-Synthetic data was generated with the `generate_mock_data.py` script and the positioning performance was tested across all model combinations (2000 synthetic samples per combination, fixed seeds). The tables report the **median** positioning error (Euclidean distance between estimated and true position) on the real test set (2000 points). `*` marks a significant difference from the original data (paired Wilcoxon signed-rank test, p < 0.05).
 
-**wKNN trained on real + synthetic data (augmentation):**
-
-| Spatial \ Radio | KNN | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m |
-| **KDE** | 46.250m* | 48.901m | 50.460m* | 48.536m* | 48.539m* | 50.326m | 49.595m | 46.339m* |
-| **NF** | 46.805m* | 49.156m | 50.465m* | 48.565m | 48.646m | 49.708m | 49.575m | 47.588m* |
-| **GAN** | 51.057m* | 49.366m* | 51.254m* | 49.176m* | 49.051m* | 49.830m | 50.576m | 51.592m* |
-| **GMM** | 46.033m* | 48.328m* | 50.536m* | 48.525m* | 48.445m* | 49.401m* | 49.659m | 46.340m* |
-
-**wKNN trained on synthetic data only:**
-
-| Spatial \ Radio | KNN | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m | 49.697m |
-| **KDE** | 45.971m* | 53.532m* | 64.143m* | 51.563m | 51.674m | 54.812m* | 51.506m* | 45.996m* |
-| **NF** | 46.013m* | 53.658m* | 63.750m* | 51.652m | 51.589m | 52.977m* | 51.181m* | 46.905m* |
-| **GAN** | 63.348m* | 57.725m* | 80.693m* | 55.721m* | 55.760m* | 75.874m* | 75.235m* | 66.107m* |
-| **GMM** | 45.603m* | 52.410m* | 65.415m* | 50.584m | 50.996m | 52.081m* | 51.803m* | 45.803m* |
-
-With augmentation, KDE + KNN reduces the median error from 49.70 m to 46.25 m (mean: 54.96 m → 51.13 m; paired Wilcoxon p < 0.001). The other best combinations (GMM + KNN 46.03 m, KDE + RF 46.34 m, GMM + RF 46.34 m) are not significantly different from KDE + KNN (paired Wilcoxon p ≥ 0.05; 95% bootstrap CIs on the median difference include 0). `python positioning/test.py` also prints the mean errors.
+<!-- RESULTS -->
 
 ## Citation
 

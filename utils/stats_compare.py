@@ -44,8 +44,10 @@ def compare_models_paired(errors1, errors2, label1="Model 1", label2="Model 2", 
     Compares two models evaluated on the SAME test points (errors1[i] and errors2[i] refer
     to the same test sample), so the comparison is paired.
 
-    Reports the Wilcoxon signed-rank test on the per-point differences and a bootstrap
-    confidence interval (resampling test points) on the difference of MEDIAN errors.
+    Significance is decided on the MEDIAN errors: paired bootstrap confidence interval
+    (resampling test points) on the difference of medians; the difference is significant
+    if the interval excludes 0. The Wilcoxon signed-rank p-value on the per-point
+    differences is also reported.
     """
     errors1, errors2 = np.asarray(errors1, float), np.asarray(errors2, float)
     if errors1.shape != errors2.shape:
@@ -61,7 +63,8 @@ def compare_models_paired(errors1, errors2, label1="Model 1", label2="Model 2", 
     ci_min, ci_max = np.percentile(boot, [100 * alpha / 2, 100 * (1 - alpha / 2)])
     diff = np.median(errors1) - np.median(errors2)
 
-    if p_value >= alpha:
+    significant = not (ci_min <= 0 <= ci_max)
+    if not significant:
         result = "NO significant difference"
     elif diff < 0:
         result = f"{label1} is better (lower error)"
@@ -72,6 +75,7 @@ def compare_models_paired(errors1, errors2, label1="Model 1", label2="Model 2", 
         "Comparison": f"{label1} vs {label2}",
         "Median Difference": round(float(diff), 3),
         f"{confidence:.0%} CI": (round(float(ci_min), 3), round(float(ci_max), 3)),
+        "Significant": significant,
         "Wilcoxon p": float(p_value),
         "Result": result
     }
