@@ -131,7 +131,7 @@ python positioning/test.py
 ---
 ## Performance Evaluation
 
-All results are on the real **test set** (2,000 measurements). `*` = significantly different from the original data (paired bootstrap 95 % confidence interval of the median difference excludes 0).
+All results are on the real **test set** (2,000 measurements). `*` =  different from the original data (paired bootstrap 95 % confidence interval of the median difference excludes 0).
 
 ### Radio models: mean absolute error (dB)
 
