@@ -2,7 +2,8 @@
 Benchmarks elapsed wall-clock time for synthetic data generation
 (spatial KDE sampling + radio feature prediction), reproducing the
 measurement described in Sec. VI.E ("Empirical Benchmarks") of the
-manuscript: median of N_RUNS runs, excluding model training/loading and file I/O.
+manuscript: median of N_RUNS runs, excluding model training/loading and file I/O,
+all CPU cores.
 
 The radio generators follow the paper implementation, not the mock pipeline:
 one model per PCI (each predicts the RSRP of one cell) with the paper's
@@ -18,9 +19,10 @@ Augmentation rate A: A x m synthetic samples, m = rows in data/train.csv.
 The per-PCI models are fitted on data/train.csv before timing. Inference time
 does not depend on the learned weights, so the neural networks are trained for
 TRAIN_EPOCHS epochs only and the GPR kernel hyperparameters are kept at their
-initial values (optimizer=None). All per-PCI GPRs have the same size (same
-training points and kernel), so one PCI is timed and multiplied by the number of
-PCIs (GPR on all PCIs takes hours at A = 30).
+initial values (optimizer=None). GPR predicts the mean only (the predictive
+standard deviation is not used by the generator). All per-PCI GPRs have the same
+size (same training points and kernel), so one PCI is timed and multiplied by the
+number of PCIs.
 
 Usage:
     python benchmark_complexity.py                       # all 7 models
@@ -42,7 +44,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RationalQuadratic
 
 warnings.filterwarnings("ignore")
-torch.set_num_threads(1)  # keep single-threaded for fair, reproducible per-call timing
+torch.set_num_threads(os.cpu_count())  # all CPU cores, for every model
 
 A_VALUES = [10, 20, 30]
 N_RUNS = int(os.environ.get('N_RUNS', '5'))
@@ -179,7 +181,7 @@ def build_models(algo, X, Y):
         return [GaussianProcessRegressor(RationalQuadratic(length_scale=1.0, alpha=1.0), alpha=1e-1,
                                          normalize_y=True, optimizer=None).fit(X, Y[:, 0])]
     if algo == 'rf':
-        return [RandomForestRegressor(n_estimators=100, random_state=42).fit(X, Y[:, j]) for j in range(Y.shape[1])]
+        return [RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1).fit(X, Y[:, j]) for j in range(Y.shape[1])]
     make = {'mlp': (PlainMLP, mlp_loss), 'cgan': (Generator, cgan_loss),
             'nf': (ConditionalRQSFlow, nf_loss), 'rec_flow': (VelocityNet, reflow_loss)}[algo]
     return [short_train(make[0](), make[1], X, Y[:, j]) for j in range(Y.shape[1])]
@@ -226,7 +228,7 @@ def run_once(algo, n_samples):
     coords_t = torch.tensor(coords, dtype=torch.float32)
     for m in model:
         if algo == 'gpr_rq':
-            vals = np.concatenate([m.predict(coords[i:i+GPR_CHUNK], return_std=True)[0]
+            vals = np.concatenate([m.predict(coords[i:i+GPR_CHUNK])
                                    for i in range(0, len(coords), GPR_CHUNK)])
         elif algo == 'rf':
             vals = m.predict(coords)
