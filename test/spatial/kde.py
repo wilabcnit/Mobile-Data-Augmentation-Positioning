@@ -29,9 +29,6 @@ def test_kde():
     
     print("-" * 30)
     print(f"KDE Evaluation Results:")
-    print(f"KS Latitude : {results['ks_lat']:.4f} (p={results['p_lat']:.4f})")
-    print(f"KS Longitude: {results['ks_lon']:.4f} (p={results['p_lon']:.4f})")
-    print(f"Average KS  : {results['avg_ks']:.4f}")
     print(f"2-D KS (FF) : {results['ks_2d']:.4f} (p={results['p_2d']:.4f})")
     print("-" * 30)
 

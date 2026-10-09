@@ -18,23 +18,19 @@ def calculate_radio_mae(real_rsrp, predicted_rsrp):
 
 def calculate_spatial_ks(real_coords, generated_coords, n_perm=1000, seed=0):
     """
-    Compares real and generated (Lat, Lon) distributions with Kolmogorov-Smirnov tests.
+    Compares real and generated (Lat, Lon) distributions with the 2-D
+    Fasano-Franceschini Kolmogorov-Smirnov test.
 
     Args:
         real_coords (np.array): Real positions [N, 2].
         generated_coords (np.array): Generated positions [M, 2].
-        n_perm (int): Number of permutations for the 2-D test p-value.
+        n_perm (int): Number of permutations for the p-value.
         seed (int): Seed of the permutation test.
 
     Returns:
-        dict: 1-D KS statistic and p-value per coordinate, their average, and the
-              2-D Fasano-Franceschini statistic and permutation p-value.
+        dict: 2-D KS statistic and permutation p-value.
     """
     real_coords = np.asarray(real_coords, dtype=float)
     generated_coords = np.asarray(generated_coords, dtype=float)
-
     ks_2d = ks2d2s(real_coords, generated_coords, method="permutation", n_perm=n_perm, seed=seed)
-
-    return {
-        "ks_2d": ks_2d["D"], "p_2d": ks_2d["p"]
-    }
+    return {"ks_2d": ks_2d["D"], "p_2d": ks_2d["p"]}

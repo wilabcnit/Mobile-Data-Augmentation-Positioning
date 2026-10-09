@@ -23,7 +23,7 @@ mdt_augmentation/
 │   ├── spatial/
 │   └── radio/                  # knn.py trains K = 1 (pipeline) and K = 2..5 (ablation)
 ├── test/                       # Evaluation scripts
-│   ├── spatial/                # 1-D and 2-D (Fasano-Franceschini) KS tests
+│   ├── spatial/                # 2-D (Fasano-Franceschini) KS test
 │   └── radio/                  # radio MAE (knn.py: K = 1..5)
 ├── generate/                   # Synthetic data generator using trained modules
 │   └── full_pipeline.py
@@ -141,9 +141,9 @@ RSRP predicted at the test positions vs real RSRP (`python test/radio/<model>.py
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **MAE (dB)** | **2.527** | 2.763 | 2.965 | 3.158 | 3.324 | 3.165 | 3.759 | 5.094 | 8.979 | 12.781 | 12.764 | 24.352 |
 
-### Spatial models: Kolmogorov-Smirnov tests
+### Spatial models: 2-D Kolmogorov-Smirnov test
 
-Generated vs real test positions (`python test/spatial/<model>.py`). A mean absolute error is not defined for the spatial models (a generated position has no paired true position), so their distributions are compared with the two-sample KS test: 1-D on latitude and longitude, and 2-D Fasano-Franceschini (p-value from 1,000 permutations). Lower statistic / higher p = closer to the real distribution.
+Generated vs real test positions (`python test/spatial/<model>.py`). A mean absolute error is not defined for the spatial models (a generated position has no paired true position), so their distributions are compared with the 2-D Fasano-Franceschini two-sample KS test (p-value from 1,000 permutations). Lower statistic / higher p = closer to the real distribution.
 
 | | **KDE** | NF | GMM | GAN |
 | :--- | :--- | :--- | :--- | :--- |
