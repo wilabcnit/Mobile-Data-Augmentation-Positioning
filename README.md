@@ -39,7 +39,6 @@ mdt_augmentation/
 │   ├── metrics.py
 │   └── stats_compare.py
 ├── generate_mock_data.py
-├── benchmark_complexity.py      # synthetic data generation time (A = 10, 20, 30)
 └── run_pipeline.sh             # full workflow, end to end
 ```
 
@@ -163,24 +162,9 @@ The positioning performance was then tested across all model combinations. The r
 | **GAN** | 4.920m\* | 5.133m | 5.291m | 5.352m\* | 5.332m\* | 5.131m | 5.157m | 5.064m | 5.147m | 5.163m | 5.503m\* | 5.178m |
 | **GMM** | 4.898m\* | 5.142m | 5.253m | 5.331m | 5.365m | 5.129m | 5.237m | 5.099m | 5.141m | 5.145m | 5.481m\* | 5.138m |
 
-KDE + 1NN reduces the median error from 5.153 m to 4.921 m. With the 1NN radio model, the four spatial models are not significantly different from each other (paired bootstrap 95 % CI of the median difference, KDE vs GMM: 0.023 m [-0.210, 0.232]; vs NF: -0.063 m [-0.290, 0.094]; vs GAN: 0.001 m [-0.284, 0.213]); KDE is preferred for its closer spatial fit (2-D KS) and low complexity. KNN with K = 1 is the best radio model for every spatial model; K > 1 averages RSRP values with the -160 not-served value, while K = 1 copies the nearest real fingerprint with its exact set of served / not-served cells.
+KDE + 1NN reduces the median error from 5.153 m to 4.921 m. With the 1NN radio model, the four spatial models are not significantly different from each other (paired bootstrap 95 % CI of the median difference, KDE vs GMM: 0.023 m [-0.210, 0.232]; vs NF: -0.063 m [-0.290, 0.094]; vs GAN: 0.001 m [-0.284, 0.213]); KDE is preferred for its closer spatial fit (2-D KS). KNN with K = 1 is the best radio model for every spatial model; K > 1 averages RSRP values with the -160 not-served value, while K = 1 copies the nearest real fingerprint with its exact set of served / not-served cells.
 
 K is selected on the **validation set** (median positioning error, `python positioning/knn_k_ablation.py`): K = 1 is the best for every spatial model.
-
-
-### Synthetic data generation time
-
-`python benchmark_complexity.py`: elapsed time to generate A × m synthetic samples (m = 7,000 real training samples, A = augmentation rate): KDE sampling + radio generation, excluding model training / loading and file I/O, all CPU cores (4), after one warm-up run; median of 5 runs (GPR-RQ and ReFlow: 3 runs).
-
-The radio generators follow the paper implementation: one model per PCI (35 PCIs) with the paper's architectures and generation steps. The proposed 1NN does one nearest-neighbour search for all PCIs and copies the nearest real fingerprint (shadowing noise on the served cells). GPR-RQ predicts the mean only (the predictive standard deviation is not used); one PCI is timed and multiplied by the number of PCIs (all per-PCI GPRs have the same size).
-
-| | **KDE-1NN (Proposed)** | KDE-CGAN | KDE-NF | KDE-MLP | KDE-RF | KDE-ReFlow | KDE-GPR (RQ) |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **A = 10** | **0.130 s** | 1.099 s | 1.751 s | 2.372 s | 4.879 s | 57.257 s | 353.604 s |
-| **A = 20** | **0.310 s** | 2.170 s | 3.826 s | 4.960 s | 8.726 s | 125.878 s | 664.804 s |
-| **A = 30** | **0.390 s** | 3.128 s | 5.107 s | 7.469 s | 12.159 s | 176.915 s | 1046.848 s |
-
-Absolute times depend on the hardware; compare the models within the table.
 
 
 ## Citation
