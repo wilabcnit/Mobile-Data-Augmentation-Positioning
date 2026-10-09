@@ -5,7 +5,7 @@ import numpy as np
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from utils.data_loader import load_mdt_data
-from utils.metrics import median_spatial_ks
+from utils.metrics import mean_spatial_ks
 
 def test_kde():
     print("Testing Spatial KDE...")
@@ -25,12 +25,12 @@ def test_kde():
     def sample(seed):
         return kde.sample(n_samples, random_state=seed)
     
-    # 4. Evaluate: median over 10 draws
-    results = median_spatial_ks(real_data, sample)
+    # 4. Evaluate: mean over 10 draws
+    results = mean_spatial_ks(real_data, sample)
     
     print("-" * 30)
     print(f"KDE Evaluation Results:")
-    print(f"2-D KS (FF) : {results['ks_2d']:.4f} (p={results['p_2d']:.4f}), median of {results['n_draws']} draws")
+    print(f"2-D KS (FF) : {results['ks_2d']:.4f} (p={results['p_2d']:.4f}), mean of {results['n_draws']} draws")
     print("-" * 30)
 
 if __name__ == "__main__":
