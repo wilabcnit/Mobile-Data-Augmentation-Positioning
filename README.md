@@ -143,11 +143,11 @@ RSRP predicted at the test positions vs real RSRP (`python test/radio/<model>.py
 
 ### Spatial models: 2-D Kolmogorov-Smirnov test
 
-Generated vs real test positions (`python test/spatial/<model>.py`). A mean absolute error is not defined for the spatial models (a generated position has no paired true position), so their distributions are compared with the 2-D Fasano-Franceschini two-sample KS test (p-value from 1,000 permutations), median over 10 independent draws of generated positions. Lower statistic / higher p = closer to the real distribution.
+Generated vs real test positions (`python test/spatial/<model>.py`). A mean absolute error is not defined for the spatial models (a generated position has no paired true position), so their distributions are compared with the 2-D Fasano-Franceschini two-sample KS test (p-value from 1,000 permutations), mean over 10 independent draws of generated positions (each draw as many positions as the test set). Lower statistic / higher p = closer to the real distribution.
 
 | | **KDE** | NF | GMM | GAN |
 | :--- | :--- | :--- | :--- | :--- |
-| **2-D KS (p)** | **0.041 (0.334)** | 0.054 (0.049) | 0.088 (0.001) | 0.210 (0.001) |
+| **2-D KS (p)** | **0.040 (0.422)** | 0.054 (0.068) | 0.090 (0.001) | 0.208 (0.001) |
 
 ### Positioning: median error (m)
 
@@ -169,13 +169,15 @@ K is selected on the **validation set** (median positioning error, `python posit
 
 ### Synthetic data generation time
 
-`python benchmark_complexity.py`: KDE sampling + radio model inference for A × m synthetic samples (m = 7,000 real training samples, A = augmentation rate), median of 5 runs (GPR-RQ: 3 runs), after one warm-up run, excluding model loading and file I/O, single PyTorch thread. The radio KNN is the proposed 1NN.
+`python benchmark_complexity.py`: elapsed time to generate A × m synthetic samples (m = 7,000 real training samples, A = augmentation rate): KDE sampling + radio generation, excluding model training / loading and file I/O, single PyTorch thread, after one warm-up run; median of 5 runs (GPR-RQ and ReFlow: 3 runs).
 
-| | **KDE-1NN (Proposed)** | KDE-RF | KDE-GPR (RQ) | KDE-MLP | KDE-CGAN | KDE-ReFlow | KDE-NF |
+The radio generators follow the paper implementation: one model per PCI (35 PCIs) with the paper's architectures and generation steps. The proposed 1NN does one nearest-neighbour search for all PCIs and copies the nearest real fingerprint (shadowing noise on the served cells). GPR-RQ: one PCI is timed and multiplied by the number of PCIs (all per-PCI GPRs have the same size).
+
+| | **KDE-1NN (Proposed)** | KDE-CGAN | KDE-NF | KDE-MLP | KDE-RF | KDE-ReFlow | KDE-GPR (RQ) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **A = 10** | **0.100 s** | 0.111 s | 18.757 s | 0.256 s | 0.177 s | 6.655 s | 0.383 s |
-| **A = 20** | **0.228 s** | 0.236 s | 37.207 s | 0.538 s | 0.379 s | 13.694 s | 1.426 s |
-| **A = 30** | **0.296 s** | 0.407 s | 57.270 s | 0.748 s | 0.758 s | 26.288 s | 2.158 s |
+| **A = 10** | **0.144 s** | 2.549 s | 4.255 s | 6.053 s | 15.632 s | 128.241 s | 1696.274 s |
+| **A = 20** | **0.250 s** | 4.871 s | 8.824 s | 12.231 s | 29.839 s | 256.273 s | 3551.959 s |
+| **A = 30** | **0.413 s** | 8.087 s | 13.264 s | 18.280 s | 45.297 s | 410.464 s | 5142.030 s |
 
 Absolute times depend on the hardware; compare the models within the table.
 
