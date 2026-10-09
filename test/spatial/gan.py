@@ -5,11 +5,10 @@ import numpy as np
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from utils.data_loader import load_mdt_data
-from utils.metrics import calculate_spatial_ks
+from utils.metrics import median_spatial_ks
 from models.spatial.definitions import SpatialGenerator
 
 def test_gan():
-    torch.manual_seed(0)  # reproducible random draws
     print("Testing Spatial GAN...")
     
     if not os.path.exists('models/spatial/gan.pth'):
@@ -30,20 +29,21 @@ def test_gan():
     real_data = load_mdt_data('data/test.csv', mode='spatial')
     n_samples = len(real_data)
     
-    # 3. Generate
-    with torch.no_grad():
-        z = torch.randn(n_samples, latent_dim)
-        generated_norm = G(z).numpy()
-        
-    # Denormalize
-    generated_data = generated_norm * std + mean
+    # 3. Generate (one reproducible draw per seed)
+    def sample(seed):
+        torch.manual_seed(seed)
+        with torch.no_grad():
+            z = torch.randn(n_samples, latent_dim)
+            generated_norm = G(z).numpy()
+        # Denormalize
+        return generated_norm * std + mean
     
-    # 4. Evaluate
-    results = calculate_spatial_ks(real_data, generated_data)
+    # 4. Evaluate: median over 10 draws
+    results = median_spatial_ks(real_data, sample)
     
     print("-" * 30)
     print(f"GAN Evaluation Results:")
-    print(f"2-D KS (FF) : {results['ks_2d']:.4f} (p={results['p_2d']:.4f})")
+    print(f"2-D KS (FF) : {results['ks_2d']:.4f} (p={results['p_2d']:.4f}), median of {results['n_draws']} draws")
     print("-" * 30)
 
 if __name__ == "__main__":

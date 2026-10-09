@@ -34,3 +34,13 @@ def calculate_spatial_ks(real_coords, generated_coords, n_perm=1000, seed=0):
     generated_coords = np.asarray(generated_coords, dtype=float)
     ks_2d = ks2d2s(real_coords, generated_coords, method="permutation", n_perm=n_perm, seed=seed)
     return {"ks_2d": ks_2d["D"], "p_2d": ks_2d["p"]}
+
+def median_spatial_ks(real_coords, sample_fn, n_draws=10):
+    """
+    2-D KS test of n_draws independent generated sets: sample_fn(seed) returns the
+    generated positions of draw seed = 0..n_draws-1. Returns the median statistic
+    and the median p-value over the draws.
+    """
+    draws = [calculate_spatial_ks(real_coords, sample_fn(seed)) for seed in range(n_draws)]
+    return {"ks_2d": np.median([d["ks_2d"] for d in draws]),
+            "p_2d": np.median([d["p_2d"] for d in draws]), "n_draws": n_draws}
