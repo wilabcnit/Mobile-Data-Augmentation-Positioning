@@ -143,7 +143,8 @@ RSRP predicted at the test positions vs real RSRP (`python test/radio/<model>.py
 
 ### Spatial models: 2-D Kolmogorov-Smirnov test
 
-Generated vs real test positions (`python test/spatial/<model>.py`). A mean absolute error is not defined for the spatial models (a generated position has no paired true position), so their distributions are compared with the 2-D Fasano-Franceschini two-sample KS test (p-value from 1,000 permutations), mean over 10 independent draws of generated positions (each draw as many positions as the test set). Lower statistic / higher p = closer to the real distribution.
+Generated vs. real test positions (`python test/spatial/<model>.py`). Since MAE is undefined for unpaired positions, distributions are compared using the 2-D Fasano–Franceschini KS test (1,000 permutations). Results are Means over 10 independent draws; lower statistics and higher p-values indicate better agreement.
+
 
 | | **KDE** | NF | GMM | GAN |
 | :--- | :--- | :--- | :--- | :--- |
