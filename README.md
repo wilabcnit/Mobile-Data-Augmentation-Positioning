@@ -2,7 +2,7 @@
 
 This repository contains the code for the paper **"Improving Outdoor Multi-cell Fingerprinting-based Positioning via Mobile Data Augmentation"** ([arXiv:2509.19405](https://arxiv.org/abs/2509.19405)).
 
-The real MDT dataset used in the paper cannot be shared. The pipeline is therefore provided with a synthetic MDT dataset that reproduces the main characteristics of real MDT data, so that it can be run end to end and applied to any MDT dataset with the same structure.
+The real MDT dataset used in the paper cannot be shared. This repository therefore includes a mock MDT dataset designed to reproduces the main characteristics of real MDT data, so that pipeline can be run end to end and applied to any MDT dataset with the same structure.
 
 ---
 
@@ -72,7 +72,7 @@ Learns the spatial distribution of the users and generates new locations.
 
 Learns the radio fingerprint as a function of location and generates the fingerprints of the new locations.
 
-* **KNN:** K-Nearest Neighbors (K = 1)
+* **KNN:** K-Nearest Neighbors *(K = 1 in the proposed model)*
 * **RF:** Random Forest
 * **GPR-RQ:** Gaussian Process (Rational Quadratic kernel)
 * **GPR-SE:** Gaussian Process (Squared Exponential kernel)
@@ -85,7 +85,7 @@ Learns the radio fingerprint as a function of location and generates the fingerp
 
 ### 3. Positioning
 
-A weighted KNN (wKNN, K = 3) positioning model is trained on the real training data together with the synthetic data, and evaluated on the real test data.
+A weighted KNN (wKNN, _K = 3_) positioning model is trained on the real training data together with the synthetic data, and evaluated on the real test data.
 
 ---
 
