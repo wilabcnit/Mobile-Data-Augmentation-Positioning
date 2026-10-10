@@ -138,6 +138,8 @@ Generated vs. real test locations, 2-D Fasano–Franceschini KS test, mean over 
 | **GAN** | 4.92\* | 5.13 | 5.29 | 5.35\* | 5.33\* | 5.14 | 5.28\* | 5.04\* | 5.19 | 5.17 | 5.71\* | 5.18 |
 | **GMM** | 5.03 | 5.08 | 5.36\* | 5.30 | 5.41\* | 5.14 | 5.27\* | 5.07\* | 5.15 | 5.14 | 5.78\* | 5.16 |
 
+> **Note:** All results above are obtained on the fully synthetic mock MDT dataset (`generate_mock_data.py`), not on the real MDT data of the paper. They illustrate the pipeline and are not intended to reproduce the values reported in the paper.
+
 ---
 *`*` = median error significantly different from the original data (paired bootstrap, 95% confidence interval).*
 
