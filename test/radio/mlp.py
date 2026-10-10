@@ -15,7 +15,7 @@ def test_mlp_radio():
         return
 
     checkpoint = torch.load('models/radio/mlp.pth')
-    model = RadioMLP(input_dim=2, output_dim=30) # Assuming 30 cells
+    model = RadioMLP(input_dim=2, output_dim=len(checkpoint['mean_out']))
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     
@@ -31,7 +31,7 @@ def test_mlp_radio():
     preds_rsrp = preds_norm * checkpoint['std_out'] + checkpoint['mean_out']
     
     mae = calculate_radio_mae(real_rsrps.numpy(), preds_rsrp.numpy())
-    print(f"MLP Radio MAE: {mae:.4f} dBm")
+    print(f"MLP Radio MAE: {mae:.2f} dB")
 
 if __name__ == "__main__":
     test_mlp_radio()

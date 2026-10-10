@@ -1,0 +1,8 @@
+# Versions used to train the stored models and produce the README results
+torch==2.14.1
+numpy==2.5.3
+pandas==3.0.5
+scikit-learn==1.9.1
+scipy==1.18.1
+joblib==1.6.0
+tabulate

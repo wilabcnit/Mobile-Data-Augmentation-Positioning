@@ -10,6 +10,7 @@ from models.radio.definitions import RadioNF
 
 def train_nf_radio(epochs=300, batch_size=64, lr=0.001):
     print("Training Radio NF (Conditional)...")
+    torch.manual_seed(42)  # reproducible initialization, batches and noise
     
     # 1. Data Loading & Normalization
     coords, rsrps = load_mdt_data('data/train.csv', mode='radio')

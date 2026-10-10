@@ -10,6 +10,7 @@ from models.spatial.definitions import SpatialNF
 
 def train_nf(epochs=500, batch_size=64, lr=0.001):
     print("Training Spatial Normalizing Flow...")
+    torch.manual_seed(42)  # reproducible initialization, batches and noise
     
     # 1. Data
     data = load_mdt_data('data/train.csv', mode='spatial')

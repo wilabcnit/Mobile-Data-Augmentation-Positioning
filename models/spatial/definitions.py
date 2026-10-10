@@ -39,19 +39,21 @@ class AffineCouplingLayer(nn.Module):
         self.input_dim = input_dim
         # Split input into two halves
         self.split_dim = input_dim // 2
+        # Size of the transformed half (input_dim - split_dim, also correct for odd input_dim)
+        self.out_dim = input_dim - self.split_dim
         
         # Scale and Translation networks (MLPs)
         # Note: We clamp scale to avoid exploding gradients
         self.scale_net = nn.Sequential(
             nn.Linear(self.split_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, self.split_dim),
+            nn.Linear(hidden_dim, self.out_dim),
             nn.Tanh() 
         )
         self.trans_net = nn.Sequential(
             nn.Linear(self.split_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, self.split_dim)
+            nn.Linear(hidden_dim, self.out_dim)
         )
 
     def forward(self, x, reverse=False):
