@@ -18,10 +18,6 @@ def train_positioning(train_data_path, model_name='wknn_baseline'):
     """
     Trains a wKNN positioning model using the specified dataset.
 
-    Args:
-        train_data_path (str): Path to the CSV file (Real or Synthetic MDT). A synthetic
-            dataset is always added to the real training data (augmentation = real + synthetic).
-        model_name (str): Name to save the model as.
     """
     print(f"Training Positioning Model: {model_name}...")
 
