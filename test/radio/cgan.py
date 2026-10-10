@@ -33,7 +33,7 @@ def test_cgan_radio():
     preds_rsrp = preds_norm * checkpoint['std_out'] + checkpoint['mean_out']
     
     mae = calculate_radio_mae(real_rsrps.numpy(), preds_rsrp.numpy())
-    print(f"cGAN Radio MAE: {mae:.4f} dB")
+    print(f"cGAN Radio MAE: {mae:.2f} dB")
 
 if __name__ == "__main__":
     test_cgan_radio()

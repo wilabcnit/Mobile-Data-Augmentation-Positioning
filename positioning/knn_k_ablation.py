@@ -42,11 +42,11 @@ def run_k_ablation():
 
     header = ["Spatial \\ Radio KNN"] + [f"K={k}" for k in K_VALUES]
     for name in sets:
-        rows = [["Original data"] + [f"{np.median(baseline[name]):.3f}m"] * len(K_VALUES)]
+        rows = [["Original data"] + [f"{np.median(baseline[name]):.2f}m"] * len(K_VALUES)]
         for s in SPATIAL_MODELS:
             row = [s.upper()]
             for k in K_VALUES:
-                cell = f"{np.median(errors[s, k][name]):.3f}m"
+                cell = f"{np.median(errors[s, k][name]):.2f}m"
                 # '*': median significantly different from the original data (paired bootstrap 95% CI)
                 if name == 'test' and compare_models_paired(errors[s, k][name], baseline[name])["Significant"]:
                     cell += "*"

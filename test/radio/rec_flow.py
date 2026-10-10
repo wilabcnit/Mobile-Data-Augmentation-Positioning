@@ -44,7 +44,7 @@ def test_reflow_radio():
     preds_rsrp = x * checkpoint['std_x'] + checkpoint['mean_x']
     
     mae = calculate_radio_mae(real_rsrps.numpy(), preds_rsrp.numpy())
-    print(f"ReFlow Radio MAE: {mae:.4f} dB")
+    print(f"ReFlow Radio MAE: {mae:.2f} dB")
 
 if __name__ == "__main__":
     test_reflow_radio()

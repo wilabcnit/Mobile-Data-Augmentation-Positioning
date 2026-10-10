@@ -46,7 +46,7 @@ if __name__ == "__main__":
     baseline = test_positioning('wknn_baseline')
     for s in spatial_models:
         if s == 'baseline':
-            val = f"{baseline['median']:.3f}m" if baseline else "X"
+            val = f"{baseline['median']:.2f}m" if baseline else "X"
             rows.append(["Original data"] + [val] * (len(radio_models)))
             continue
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
             res = test_positioning(f"wknn_{s}_{r}")
 
             if res:
-                cell = f"{res['median']:.3f}m"
+                cell = f"{res['median']:.2f}m"
                 # '*': median significantly different from the original data (paired bootstrap 95% CI)
                 if baseline and compare_models_paired(res['errors'], baseline['errors'])["Significant"]:
                     cell += "*"

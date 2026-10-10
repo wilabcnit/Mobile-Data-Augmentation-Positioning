@@ -138,7 +138,7 @@ RSRP predicted at the test positions vs real RSRP (`python test/radio/<model>.py
 
 | | **KNN K=1** | KNN K=2 | KNN K=3 | KNN K=4 | KNN K=5 | GPR-RQ | RF | GPR-SE | MLP | cGAN | ReFlow | NF |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **MAE (dB)** | **2.527** | 2.763 | 2.965 | 3.158 | 3.324 | 3.165 | 3.759 | 5.094 | 8.979 | 12.781 | 12.764 | 24.352 |
+| **MAE (dB)** | **2.53** | 2.76 | 2.97 | 3.16 | 3.32 | 3.17 | 3.76 | 5.09 | 8.98 | 12.78 | 12.76 | 24.35 |
 
 ### Spatial models: 2-D Kolmogorov-Smirnov test
 
@@ -147,7 +147,7 @@ Generated vs. real test positions (`python test/spatial/<model>.py`). Since MAE 
 
 | | **KDE** | NF | GMM | GAN |
 | :--- | :--- | :--- | :--- | :--- |
-| **2-D KS (p)** | **0.040 (0.422)** | 0.054 (0.068) | 0.091 (0.001) | 0.208 (0.001) |
+| **2-D KS (p)** | **0.04 (0.42)** | 0.05 (0.07) | 0.09 (<0.01) | 0.21 (<0.01) |
 
 ### Positioning: median error (m)
 
@@ -156,13 +156,13 @@ The positioning performance was then tested across all model combinations. The r
 
 | Spatial \ Radio | KNN K=1 | KNN K=2 | KNN K=3 | KNN K=4 | KNN K=5 | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m |
-| **KDE** | **4.921m\*** | 5.063m | 5.285m | 5.359m\* | 5.422m\* | 5.129m | 5.296m\* | 5.069m | 5.107m | 5.163m | 5.982m\* | 5.183m |
-| **NF** | 4.984m | 5.175m | 5.242m | 5.109m | 5.202m | 5.147m | 5.278m\* | 4.975m\* | 5.104m | 5.146m | 5.780m\* | 5.122m |
-| **GAN** | 4.920m\* | 5.133m | 5.291m | 5.352m\* | 5.332m\* | 5.141m | 5.278m\* | 5.038m\* | 5.191m | 5.173m | 5.713m\* | 5.178m |
-| **GMM** | 5.031m | 5.080m | 5.356m\* | 5.299m | 5.414m\* | 5.136m | 5.275m\* | 5.067m\* | 5.153m | 5.141m | 5.782m\* | 5.160m |
+| **Original data** | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m |
+| **KDE** | **4.92m\*** | 5.06m | 5.29m | 5.36m\* | 5.42m\* | 5.13m | 5.30m\* | 5.07m | 5.11m | 5.16m | 5.98m\* | 5.18m |
+| **NF** | 4.98m | 5.18m | 5.24m | 5.11m | 5.20m | 5.15m | 5.28m\* | 4.98m\* | 5.10m | 5.15m | 5.78m\* | 5.12m |
+| **GAN** | 4.92m\* | 5.13m | 5.29m | 5.35m\* | 5.33m\* | 5.14m | 5.28m\* | 5.04m\* | 5.19m | 5.17m | 5.71m\* | 5.18m |
+| **GMM** | 5.03m | 5.08m | 5.36m\* | 5.30m | 5.41m\* | 5.14m | 5.27m\* | 5.07m\* | 5.15m | 5.14m | 5.78m\* | 5.16m |
 
-KDE + 1NN reduces the median error from 5.153 m to 4.921 m. With the 1NN radio model, the four spatial models are not significantly different from each other (paired bootstrap 95 % CI of the median difference, KDE vs GMM: -0.110 m [-0.356, 0.078]; vs NF: -0.063 m [-0.290, 0.094]; vs GAN: 0.001 m [-0.284, 0.213]); KDE is preferred for its closer spatial fit (2-D KS). KNN with K = 1 is the best radio model for every spatial model; K > 1 averages RSRP values with the -160 not-served value, while K = 1 copies the nearest real fingerprint with its exact set of served / not-served cells.
+KDE + 1NN reduces the median error from 5.15 m to 4.92 m. With the 1NN radio model, the four spatial models are not significantly different from each other (paired bootstrap 95 % CI of the median difference, KDE vs GMM: -0.11 m [-0.36, 0.08]; vs NF: -0.06 m [-0.29, 0.09]; vs GAN: 0.00 m [-0.28, 0.21]); KDE is preferred for its closer spatial fit (2-D KS). KNN with K = 1 is the best radio model for every spatial model; K > 1 averages RSRP values with the -160 not-served value, while K = 1 copies the nearest real fingerprint with its exact set of served / not-served cells.
 
 K is selected on the **validation set** (median positioning error, `python positioning/knn_k_ablation.py`): K = 1 is the best for every spatial model.
 

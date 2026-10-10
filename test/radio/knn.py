@@ -22,7 +22,7 @@ def test_knn_radio():
         
         # Predict
         maes = [calculate_radio_mae(rsrps.numpy(), knn.predict(coords.numpy())) for coords, rsrps in data.values()]
-        print(f"{k:<5}{maes[0]:<22.4f}{maes[1]:<15.4f}")
+        print(f"{k:<5}{maes[0]:<22.2f}{maes[1]:<15.2f}")
 
 if __name__ == "__main__":
     test_knn_radio()

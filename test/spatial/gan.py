@@ -43,7 +43,8 @@ def test_gan():
     
     print("-" * 30)
     print(f"GAN Evaluation Results:")
-    print(f"2-D KS (FF) : {results['ks_2d']:.4f} (p={results['p_2d']:.4f}), mean of {results['n_draws']} draws")
+    p_txt = f"{results['p_2d']:.2f}" if results['p_2d'] >= 0.01 else "<0.01"
+    print(f"2-D KS (FF) : {results['ks_2d']:.2f} (p={p_txt}), mean of {results['n_draws']} draws")
     print("-" * 30)
 
 if __name__ == "__main__":

@@ -34,7 +34,7 @@ def test_nf_radio():
     preds_rsrp = preds_norm * checkpoint['std_x'] + checkpoint['mean_x']
     
     mae = calculate_radio_mae(real_rsrps.numpy(), preds_rsrp.numpy())
-    print(f"NF Radio MAE: {mae:.4f} dB")
+    print(f"NF Radio MAE: {mae:.2f} dB")
 
 if __name__ == "__main__":
     test_nf_radio()
