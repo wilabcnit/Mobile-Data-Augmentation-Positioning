@@ -139,8 +139,7 @@ Generated vs. real test locations, 2-D Fasano–Franceschini KS test, mean over 
 | **GMM** | 5.03 | 5.08 | 5.36\* | 5.30 | 5.41\* | 5.14 | 5.27\* | 5.07\* | 5.15 | 5.14 | 5.78\* | 5.16 |
 
 ---
-_`*` = median error significantly different from the original data (paired bootstrap, 95 % confidence interval).
-_
+__`*` = median error significantly different from the original data (paired bootstrap, 95 % confidence interval).__
 ## Citation
 
 If you use this code in your research, please cite:
