@@ -26,7 +26,7 @@ def train_reflow_radio(epochs=300, batch_size=64, lr=0.001):
     dataset = TensorDataset(coords_norm, rsrps_norm)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     
-    # 2. Model (Velocity Field)
+    # 2. Model 
     model = VelocityField(input_dim=rsrps.shape[1], condition_dim=2)
     optimizer = optim.Adam(model.parameters(), lr=lr)
     criterion = torch.nn.MSELoss()
