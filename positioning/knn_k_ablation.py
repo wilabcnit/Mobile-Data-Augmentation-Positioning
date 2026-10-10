@@ -1,10 +1,7 @@
 """
 Radio KNN K ablation on positioning, for every spatial model: synthetic positions from
-KDE / NF / GAN / GMM + radio KNN (K = 1..5), wKNN trained on real + synthetic data.
+KDE / NF / GAN / GMM + radio KNN (K = 1..5), wKNN trained on  synthetic data.
 Median positioning error on the VALIDATION set (where K is selected) and on the TEST set.
-Reads the synthetic datasets augm_data/synthetic_<spatial>_knn.csv (K = 1) and
-augm_data/synthetic_<spatial>_knn_k<K>.csv (K = 2..5), written by
-python generate/full_pipeline.py all.
 """
 import sys
 import os
