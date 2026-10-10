@@ -105,7 +105,7 @@ The final utility is assessed by training a **Weighted KNN (wKNN, K=3, inverse M
 
 ### 4. Generating Augmented Data
 
-Each synthetic dataset has 2 × the real training size (14,000 samples). To generate a specific synthetic dataset, or all of them (the 32 spatial × radio combinations and, for the K ablation, the radio KNN with K = 2..5: `synthetic_<spatial>_knn_k<K>.csv`):
+Each synthetic dataset has 2 × the real training size (14,000 samples). Generated RSRP values below -160 dBm (not served) are set to -160. To generate a specific synthetic dataset, or all of them (the 32 spatial × radio combinations and, for the K ablation, the radio KNN with K = 2..5: `synthetic_<spatial>_knn_k<K>.csv`):
 
 ```
 python generate/full_pipeline.py kde knn
@@ -157,10 +157,10 @@ The positioning performance was then tested across all model combinations. The r
 | Spatial \ Radio | KNN K=1 | KNN K=2 | KNN K=3 | KNN K=4 | KNN K=5 | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Original data** | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m |
-| **KDE** | **4.921m\*** | 5.063m | 5.285m | 5.359m\* | 5.422m\* | 5.171m | 5.201m | 5.076m | 5.146m | 5.153m | 5.518m\* | 5.183m |
-| **NF** | 4.984m | 5.175m | 5.242m | 5.109m | 5.202m | 5.136m | 5.218m | 5.008m\* | 5.187m | 5.136m | 5.535m\* | 5.122m |
-| **GAN** | 4.920m\* | 5.133m | 5.291m | 5.352m\* | 5.332m\* | 5.131m | 5.157m | 5.064m | 5.147m | 5.163m | 5.503m\* | 5.178m |
-| **GMM** | 5.031m | 5.080m | 5.356m\* | 5.299m | 5.414m\* | 5.169m | 5.233m | 5.076m | 5.146m | 5.163m | 5.488m\* | 5.160m |
+| **KDE** | **4.921m\*** | 5.063m | 5.285m | 5.359m\* | 5.422m\* | 5.129m | 5.296m\* | 5.069m | 5.107m | 5.163m | 5.982m\* | 5.183m |
+| **NF** | 4.984m | 5.175m | 5.242m | 5.109m | 5.202m | 5.147m | 5.278m\* | 4.975m\* | 5.104m | 5.146m | 5.780m\* | 5.122m |
+| **GAN** | 4.920m\* | 5.133m | 5.291m | 5.352m\* | 5.332m\* | 5.141m | 5.278m\* | 5.038m\* | 5.191m | 5.173m | 5.713m\* | 5.178m |
+| **GMM** | 5.031m | 5.080m | 5.356m\* | 5.299m | 5.414m\* | 5.136m | 5.275m\* | 5.067m\* | 5.153m | 5.141m | 5.782m\* | 5.160m |
 
 KDE + 1NN reduces the median error from 5.153 m to 4.921 m. With the 1NN radio model, the four spatial models are not significantly different from each other (paired bootstrap 95 % CI of the median difference, KDE vs GMM: -0.110 m [-0.356, 0.078]; vs NF: -0.063 m [-0.290, 0.094]; vs GAN: 0.001 m [-0.284, 0.213]); KDE is preferred for its closer spatial fit (2-D KS). KNN with K = 1 is the best radio model for every spatial model; K > 1 averages RSRP values with the -160 not-served value, while K = 1 copies the nearest real fingerprint with its exact set of served / not-served cells.
 
