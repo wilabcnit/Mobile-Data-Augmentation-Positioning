@@ -91,7 +91,7 @@ A weighted KNN (wKNN, _K = 3_) positioning model is trained on the real training
 
 ## Usage
 
-**Generate synthetic data.** Each synthetic dataset has twice the size of the real training set.
+**Generate synthetic data.** Each synthetic dataset has twice the size **(X2)** of the real training set.
 
 ```bash
 python generate/full_pipeline.py kde knn    # one spatial / radio combination
