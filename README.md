@@ -24,7 +24,7 @@ mdt_augmentation/
 │   ├── train.py
 │   ├── test.py
 │   └── knn_k_ablation.py       # Radio KNN with K = 1..5
-├── utils/                      # Data loading, geodesy, metrics, statistical tests
+├── utils/                      
 ├── generate_mock_data.py       # Mock MDT dataset
 └── run_pipeline.sh             # Full workflow
 ```
