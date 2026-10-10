@@ -60,7 +60,7 @@ Generate the mock MDT dataset:
 python generate_mock_data.py
 ```
 
-This creates `data/train.csv` (70 %), `data/validation.csv` (10 %) and `data/test.csv` (20 %): 10,000 MDT measurements in a city-center scenario (WGS84 coordinates around Bologna, ~2 km²), 35 cells, 3GPP TR 38.901 UMa NLOS pathloss, 7.8 dB spatially correlated shadow fading. Each measurement reports at most the 8 strongest detected cells; the other cells are not served (RSRP = -160).
+This creates `data/train.csv` (70 %), `data/validation.csv` (10 %) and `data/test.csv` (20 %): 10,000 MDT measurements in a city-center scenario (WGS84 coordinates around Bologna, ~2 km²), 35 cells, 3GPP TR 38.901 UMa NLOS pathloss, 7.8 dB spatially correlated shadow fading. Each measurement reports at most the 10 strongest detected cells; the other cells are not served (RSRP = -160).
 
 To run the whole workflow (data → models → synthetic data → positioning):
 ```bash
@@ -95,7 +95,7 @@ The augmentation pipeline consists of two independent modules:
 * **NF:** Normalizing Flow
 * **ReFlow:** Rectified Flow (Diffusion-based model)
 
-The GPR models are large, so they are not stored: `python train/radio/gpr_rq.py` and `python train/radio/gpr_se.py` re-create them.
+The GPR models are stored for mean prediction only (without the N × N Cholesky factor, which is needed only for the predictive standard deviation).
 
 **_Implementation Note:_** For the mock data provided here, we use a single "one-shot" training model. However, when dealing with real MDT data, models should be trained per-PCI (as done in the referenced paper) to accurately capture cell-specific signal characteristics.
 
@@ -105,7 +105,7 @@ The final utility is assessed by training a **Weighted KNN (wKNN, K=3, inverse M
 
 ### 4. Generating Augmented Data
 
-Each synthetic dataset has 2 × the real training size (14,000 samples). To generate a specific synthetic dataset, or all of them (the 32 spatial × radio combinations and, for the K ablation, the radio KNN with K = 2..5: `synthetic_<spatial>_knn_k<K>.csv`):
+Each synthetic dataset has 5 × the real training size (35,000 samples). To generate a specific synthetic dataset, or all of them (the 32 spatial × radio combinations and, for the K ablation, the radio KNN with K = 2..5: `synthetic_<spatial>_knn_k<K>.csv`):
 
 ```
 python generate/full_pipeline.py kde knn
@@ -138,7 +138,7 @@ RSRP predicted at the test positions vs real RSRP (`python test/radio/<model>.py
 
 | | **KNN K=1** | KNN K=2 | KNN K=3 | KNN K=4 | KNN K=5 | GPR-RQ | RF | GPR-SE | MLP | cGAN | ReFlow | NF |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **MAE (dB)** | **2.527** | 2.763 | 2.965 | 3.158 | 3.324 | 3.165 | 3.759 | 5.094 | 8.979 | 12.781 | 12.764 | 24.352 |
+| **MAE (dB)** | **2.911** | 3.159 | 3.382 | 3.585 | 3.779 | 3.659 | 4.252 | 5.720 | 9.675 | 15.068 | 14.421 | 24.566 |
 
 ### Spatial models: 2-D Kolmogorov-Smirnov test
 
@@ -156,15 +156,25 @@ The positioning performance was then tested across all model combinations. The r
 
 | Spatial \ Radio | KNN K=1 | KNN K=2 | KNN K=3 | KNN K=4 | KNN K=5 | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m | 5.153m |
-| **KDE** | **4.921m\*** | 5.063m | 5.285m | 5.359m\* | 5.422m\* | 5.171m | 5.201m | 5.076m | 5.146m | 5.153m | 5.518m\* | 5.183m |
-| **NF** | 4.984m | 5.175m | 5.242m | 5.109m | 5.202m | 5.136m | 5.218m | 5.008m\* | 5.187m | 5.136m | 5.535m\* | 5.122m |
-| **GAN** | 4.920m\* | 5.133m | 5.291m | 5.352m\* | 5.332m\* | 5.131m | 5.157m | 5.064m | 5.147m | 5.163m | 5.503m\* | 5.178m |
-| **GMM** | 4.898m\* | 5.142m | 5.253m | 5.331m | 5.365m | 5.129m | 5.237m | 5.099m | 5.141m | 5.145m | 5.481m\* | 5.138m |
+| **Original data** | 4.965m | 4.965m | 4.965m | 4.965m | 4.965m | 4.965m | 4.965m | 4.965m | 4.965m | 4.965m | 4.965m | 4.965m |
+| **KDE** | 4.867m | **4.570m\*** | 4.657m\* | 4.742m\* | 4.842m | 4.887m\* | 5.040m\* | 4.589m\* | 4.894m | 4.943m | 5.473m\* | 4.887m |
+| **NF** | 4.915m | 4.625m\* | 4.783m | 4.796m | 4.848m | 4.898m | 5.007m | 4.576m\* | 4.968m | 4.951m | 5.435m\* | 4.914m |
+| **GAN** | 4.911m | 4.858m | 4.885m | 4.883m | 4.896m | 4.903m | 5.019m | 4.742m\* | 4.898m | 4.951m | 5.435m\* | 4.880m |
+| **GMM** | 4.930m | 4.591m\* | 4.674m\* | 4.665m\* | 4.704m\* | 4.898m\* | 5.023m\* | 4.588m\* | 4.887m | 4.934m | 5.267m\* | 4.903m |
 
-KDE + 1NN reduces the median error from 5.153 m to 4.921 m. With the 1NN radio model, the four spatial models are not significantly different from each other (paired bootstrap 95 % CI of the median difference, KDE vs GMM: 0.023 m [-0.210, 0.232]; vs NF: -0.063 m [-0.290, 0.094]; vs GAN: 0.001 m [-0.284, 0.213]); KDE is preferred for its closer spatial fit (2-D KS). KNN with K = 1 is the best radio model for every spatial model; K > 1 averages RSRP values with the -160 not-served value, while K = 1 copies the nearest real fingerprint with its exact set of served / not-served cells.
+KDE + 1NN reduces the median error from 4.965 m to 4.867 m, but the difference is not significant. The lowest errors are obtained with the radio KNN with K = 2 (KDE: 4.570 m, GMM: 4.591 m, NF: 4.625 m) and with GPR-RQ (4.576–4.742 m), both significantly better than the original data for most spatial models.
 
-K is selected on the **validation set** (median positioning error, `python positioning/knn_k_ablation.py`): K = 1 is the best for every spatial model.
+K selected on the **validation set** (median positioning error, `python positioning/knn_k_ablation.py`): K = 4 for KDE, K = 3 for NF and GMM, K = 1 for GAN.
+
+Validation set, median positioning error (m), radio KNN:
+
+| Spatial \ Radio KNN | K=1 | K=2 | K=3 | K=4 | K=5 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Original data** | 5.396m | 5.396m | 5.396m | 5.396m | 5.396m |
+| **KDE** | 5.185m | 4.960m | 4.895m | **4.864m** | 5.017m |
+| **NF** | 4.949m | 4.889m | **4.769m** | 4.853m | 4.973m |
+| **GAN** | **5.109m** | 5.221m | 5.286m | 5.293m | 5.320m |
+| **GMM** | 5.059m | 5.056m | **4.895m** | 4.981m | 5.036m |
 
 
 ## Citation
