@@ -140,7 +140,7 @@ Generated vs. real test locations, 2-D Fasano–Franceschini KS test, mean over 
 
 *`*` = median error significantly different from the original data (paired bootstrap, 95% confidence interval).*
 
-> **Note:** All results above are obtained on the fully synthetic mock MDT dataset (`generate_mock_data.py`), not on the real MDT data of the paper. They illustrate the pipeline and are not intended to reproduce the values reported in the paper.
+> **Note:** All results above are obtained on the fully synthetic mock MDT dataset, not on the real MDT data of the paper. They illustrate the pipeline and are not intended to reproduce the values reported in the paper.
 
 ---
 
