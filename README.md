@@ -1,8 +1,8 @@
-### **README.md**
-
 # MDT Augmentation for Improved Positioning in Mobile Networks
 
-This repository contains the code for the research paper: **"Improving Outdoor Multi-cell Fingerprinting-based Positioning via Mobile Data Augmentation."** https://arxiv.org/abs/2509.19405
+This repository contains the code for the paper **"Improving Outdoor Multi-cell Fingerprinting-based Positioning via Mobile Data Augmentation"** ([arXiv:2509.19405](https://arxiv.org/abs/2509.19405)).
+
+The real MDT dataset used in the paper cannot be shared. This repository therefore includes a mock MDT dataset designed to reproduce the main characteristics of real MDT data, so that the pipeline can be run end to end and applied to any MDT dataset with the same structure.
 
 ---
 
@@ -10,130 +10,144 @@ This repository contains the code for the research paper: **"Improving Outdoor M
 
 ```
 mdt_augmentation/
-├── data/                       # MDT datasets
-│   ├── train.csv               
-│   └── test.csv                
-├── augm_data/                  # Output directory for synthetic MDT datasets
-├── models/                     # Saved models
-│   ├── spatial/                # KDE, GMM, GAN, NF models
-│   ├── radio/                  # KNN, RF, GPR, MLP, cGAN, NF, ReFlow models
+├── data/                       # MDT datasets (70/10/20 train/validation/test split)
+├── augm_data/                  # Augmented (synthetic) MDT datasets
+├── models/                     # Trained models
+│   ├── spatial/                # KDE, GMM, GAN, NF
+│   ├── radio/                  # KNN, RF, GPR, MLP, cGAN, NF, ReFlow
 │   └── positioning/            # wKNN positioning models
-├── train/                      # Training scripts
-│   ├── spatial/                
-│   ├── radio/                  
-├── test/                       # Evaluation scripts(MAE)
-│   ├── spatial/                
-│   ├── radio/                                 
-│   │   └── knn_k_ablation.py   # sweeps K = 1..5 for radio KNN
-├── generate/                   # Synthetic data generator using trained modules
-│   ├── full_pipeline.py        
-├── positioning/                # Positioning algorithm
-│   ├── train.py                
-│   └── test.py                 
+├── train/                      # Training scripts (spatial/, radio/)
+├── test/                       # Evaluation scripts (spatial/, radio/)
+├── generate/
+│   └── full_pipeline.py        # Synthetic data generation
+├── positioning/
+│   ├── train.py
+│   ├── test.py
+│   └── knn_k_ablation.py       # Radio KNN with K = 1..5
 ├── utils/                      
-│   ├── data_loader.py          
-│   ├── metrics.py              
-│   └── stats_compare.py        
-└── generate_mock_data.py       
-
-
+├── generate_mock_data.py       # Mock MDT dataset
+└── run_pipeline.sh             # Full workflow
 ```
 
 ---
 
-## Dependencies
+## Getting Started
 
-The project requires Python 3.8+ and the following libraries:
-* `torch` [2.7.1+cpu]
-* `numpy`[2.0.2]
-* `pandas`[2.3.0]
-* `scikit-learn`[1.6.1]
-* `scipy`[1.15.3]
-* `joblib`[1.5.1]
+Python 3.10+ is required. Install the dependencies (versions used for the stored models):
 
-If you do not have real MDT traces yet, generate a realistic mock dataset:
 ```bash
-python generate_mock_data.py
-
+pip install -r requirements.txt
 ```
 
-This creates `data/train.csv` and `data/test.csv`.
+Generate the MDT dataset:
+
+```bash
+python generate_mock_data.py
+```
+
+This creates a mock MDT dataset that mimics a real dense urban deployment: 10,000 measurements over 35 cells, with realistic propagation (3GPP TR 38.901) and MDT reporting (8 reported cells per measurement). It is split into train (70 %), validation (10 %) and test (20 %).
+
+Run the full workflow (data → models → synthetic data → positioning):
+
+```bash
+./run_pipeline.sh
+```
 
 ---
 
 ## Methodology
 
-The augmentation pipeline consists of two independent modules:
+The augmentation pipeline consists of two independent modules.
 
 ### 1. Spatial Augmentation
 
-**Goal:** Learn the spatial distribution of users and generate new valid locations.
+Learns the spatial distribution of the users and generates new locations.
 
-* **KDE:** Kernel Density Estimation (Gaussian Kernel)
-* **GMM:** Gaussian Mixture Models
+* **KDE:** Kernel Density Estimation (Gaussian kernel)
+* **GMM:** Gaussian Mixture Model
 * **GAN:** Generative Adversarial Network
-* **NF:** Normalizing Flows (RealNVP architecture)
+* **NF:** Normalizing Flow
 
 ### 2. Radio Augmentation
 
-**Goal:** Learn the radio fingerprint of users and generate new valid radio fingerprints.
+Learns the radio fingerprint as a function of location and generates the fingerprints of the new locations.
 
-* **KNN:** K-Nearest Neighbors Regressor **(K=1)**
-* **RF:** Random Forest Regressor
-* **GPR-RQ:** Gaussian Process (Rational Quadratic Kernel)
-* **GPR-SE:** Gaussian Process (Squared Exponential Kernel)
+* **KNN:** K-Nearest Neighbors *(K = 1 in the proposed model)*
+* **RF:** Random Forest
+* **GPR-RQ:** Gaussian Process (Rational Quadratic kernel)
+* **GPR-SE:** Gaussian Process (Squared Exponential kernel)
 * **MLP:** Multi-Layer Perceptron
 * **cGAN:** Conditional GAN
 * **NF:** Normalizing Flow
-* **ReFlow:** Rectified Flow (Diffusion-based model)
+* **ReFlow:** Rectified Flow
 
-**_Implementation Note:_** For the mock data provided here, we use a single "one-shot" training model. However, when dealing with real MDT data, models should be trained per-PCI (as done in the referenced paper) to accurately capture cell-specific signal characteristics.
+> **Note:** For simplicity, a single multi-output model is trained here. With real MDT data, the radio models should be trained per PCI, as in the paper, to capture cell-specific signal characteristics.
 
 ### 3. Positioning
 
-The final utility is assessed by training a **Weighted KNN (wKNN)** positioning model on the augmented data and testing it on real real data.
+A weighted KNN (wKNN, _K = 3_) positioning model is trained on the real training data together with the synthetic data, and evaluated on the real test data.
 
+---
 
-### 4. Generating Augmented Data
+## Usage
 
-To generate a specific synthetic dataset:
+**Generate synthetic data.** Each synthetic dataset has twice the size of the real training set.
 
-```
-python generate/full_pipeline.py
-
-```
-
-*Output is saved to `augm_data/`.*
-
-### 5. Training Positioning on Augmented Data
-
-To assess if the augmented data improves positioning:
-
-1. Generate data (Step 4).
-2. Train wKNN on the new CSV:
-```
-python positioning/train.py
+```bash
+python generate/full_pipeline.py kde knn    # one spatial / radio combination
+python generate/full_pipeline.py all        # all combinations
 ```
 
-3. Test on test set:
-```
+Output is saved to `augm_data/`.
+
+**Train and test the positioning models:**
+
+```bash
+python positioning/train.py all
 python positioning/test.py
+python positioning/knn_k_ablation.py
 ```
 
 ---
-## Performance Evaluation
-synthetic data was generated using the generate_mock_data.py script. The positioning performance was then tested across all model combinations. The results below represent the Median Positioning Error achieved during this test run:
-| Spatial \ Radio | KNN | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 56.056m | 56.056m | 56.056m | 56.056m | 56.056m | 56.056m | 56.056m | 56.056m |
-| **KDE** | 53.349m | 53.831m | 69.027m | 56.958m | 58.042m | 58.554m | 56.732m | 61.856m |
-| **NF** | 53.589m | 54.155m | 72.454m | 71.327m | 58.707m | 60.024m | 58.010m | 59.841m |
-| **GAN** | 76.466m | 61.902m | 87.227m | 85.546m | 86.235m | 84.371m | 81.912m | 84.790m |
-| **GMM** | 64.819m | 55.230m | 82.116m | 97.033m | 63.156m | 73.211m | 70.241m | 73.711m |
+
+## Results
+
+All results are on the original (non-augmented) test set. The KDE bandwidth and the radio KNN K are selected on the validation set.
+
+### Radio models: mean absolute error (dB)
+
+| | **KNN K=1** | KNN K=2 | KNN K=3 | KNN K=4 | KNN K=5 | GPR-RQ | RF | GPR-SE | MLP | cGAN | ReFlow | NF |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **MAE (dB)** | **2.53** | 2.76 | 2.97 | 3.16 | 3.32 | 3.17 | 3.76 | 5.09 | 8.98 | 12.78 | 12.76 | 24.35 |
+
+### Spatial models: 2-D Kolmogorov–Smirnov test
+
+Generated vs. real test locations, 2-D Fasano–Franceschini KS test, mean over 10 independent draws. Lower statistic and higher p-value indicate better agreement.
+
+| | **KDE** | NF | GMM | GAN |
+| :--- | :--- | :--- | :--- | :--- |
+| **2-D KS (p)** | **0.04 (0.42)** | 0.05 (0.07) | 0.09 (<0.01) | 0.21 (<0.01) |
+
+### Positioning: median error (m)
+
+| Spatial \ Radio | **KNN K=1** | KNN K=2 | KNN K=3 | KNN K=4 | KNN K=5 | MLP | cGAN | GPR-RQ | GPR-SE | NF | ReFlow | RF |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Original data** | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 |
+| **KDE** | **4.92\*** | 5.06 | 5.29 | 5.36\* | 5.42\* | 5.13 | 5.30\* | 5.07 | 5.11 | 5.16 | 5.98\* | 5.18 |
+| **NF** | 4.98 | 5.18 | 5.24 | 5.11 | 5.20 | 5.15 | 5.28\* | 4.98\* | 5.10 | 5.15 | 5.78\* | 5.12 |
+| **GAN** | 4.92\* | 5.13 | 5.29 | 5.35\* | 5.33\* | 5.14 | 5.28\* | 5.04\* | 5.19 | 5.17 | 5.71\* | 5.18 |
+| **GMM** | 5.03 | 5.08 | 5.36\* | 5.30 | 5.41\* | 5.14 | 5.27\* | 5.07\* | 5.15 | 5.14 | 5.78\* | 5.16 |
+
+*`*` = statistically differs from the original data at 95 % confidence(utils/stats_compare.py).*
+
+> **Note:** All results above are obtained on the fully synthetic mock MDT dataset, not on the real MDT data of the paper. They illustrate the pipeline and are not intended to reproduce the values reported in the paper.
+
+---
 
 ## Citation
 
-If you use this code for your research, please cite:
+If you use this code in your research, please cite:
+
 ```
 @article{chahoud2025improving,
   title={Improving Outdoor Multi-cell Fingerprinting-based Positioning via Mobile Data Augmentation},

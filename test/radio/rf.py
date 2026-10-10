@@ -20,7 +20,7 @@ def test_rf_radio():
     pred_rsrps = rf.predict(coords.numpy())
     
     mae = calculate_radio_mae(real_rsrps.numpy(), pred_rsrps)
-    print(f"RF Radio MAE: {mae:.4f} dBm")
+    print(f"RF Radio MAE: {mae:.2f} dB")
 
 if __name__ == "__main__":
     test_rf_radio()

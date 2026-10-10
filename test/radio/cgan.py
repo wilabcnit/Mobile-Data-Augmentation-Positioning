@@ -8,6 +8,7 @@ from utils.metrics import calculate_radio_mae
 from models.radio.definitions import RadioGenerator
 
 def test_cgan_radio():
+    torch.manual_seed(0)  # reproducible random draws
     print("Testing Radio cGAN...")
     
     if not os.path.exists('models/radio/cgan.pth'):
@@ -17,7 +18,7 @@ def test_cgan_radio():
     checkpoint = torch.load('models/radio/cgan.pth')
     latent_dim = checkpoint['latent_dim']
     
-    G = RadioGenerator(condition_dim=2, latent_dim=latent_dim, output_dim=30)
+    G = RadioGenerator(condition_dim=2, latent_dim=latent_dim, output_dim=len(checkpoint['mean_out']))
     G.load_state_dict(checkpoint['model_state_dict'])
     G.eval()
     
@@ -32,7 +33,7 @@ def test_cgan_radio():
     preds_rsrp = preds_norm * checkpoint['std_out'] + checkpoint['mean_out']
     
     mae = calculate_radio_mae(real_rsrps.numpy(), preds_rsrp.numpy())
-    print(f"cGAN Radio MAE: {mae:.4f} dBm")
+    print(f"cGAN Radio MAE: {mae:.2f} dB")
 
 if __name__ == "__main__":
     test_cgan_radio()

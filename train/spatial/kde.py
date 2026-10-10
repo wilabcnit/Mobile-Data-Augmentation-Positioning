@@ -1,8 +1,8 @@
 import sys
 import os
 import joblib
+import numpy as np
 from sklearn.neighbors import KernelDensity
-from sklearn.model_selection import GridSearchCV
 
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
@@ -13,14 +13,19 @@ def train_kde():
     
     # 1. Load Data
     data = load_mdt_data('data/train.csv', mode='spatial')
+    val_data = load_mdt_data('data/validation.csv', mode='spatial')
     
-    # 2. Setup KDE with Grid Search for Bandwidth
-    params = {'bandwidth': np.logspace(-2, 0, 5)}
-    grid = GridSearchCV(KernelDensity(kernel='gaussian'), params, cv=3)
-    grid.fit(data)
+    # 2. Select the bandwidth (same unit as the coordinates) by validation log-likelihood
+    # Grid spans 0.1% to ~100% of the coordinate spread so the optimum is not at the edge
+    spread = data.std(axis=0).mean()
+    bandwidths = spread * np.logspace(-3, 0, 31)
+    scores = [KernelDensity(kernel='gaussian', bandwidth=bw).fit(data).score(val_data) for bw in bandwidths]
+    best_idx = int(np.argmax(scores))
+    if best_idx in (0, len(bandwidths) - 1):
+        print("Warning: best bandwidth is at the edge of the search grid.")
     
-    best_kde = grid.best_estimator_
-    print(f"Best Bandwidth: {best_kde.bandwidth}")
+    best_kde = KernelDensity(kernel='gaussian', bandwidth=bandwidths[best_idx]).fit(data)
+    print(f"Best Bandwidth: {best_kde.bandwidth:.3g} (validation log-likelihood: {scores[best_idx]:.2f})")
     
     # 3. Save Model
     os.makedirs('models/spatial', exist_ok=True)
@@ -28,5 +33,4 @@ def train_kde():
     print("Model saved to models/spatial/kde.pkl")
 
 if __name__ == "__main__":
-    import numpy as np
     train_kde()
