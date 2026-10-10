@@ -41,7 +41,7 @@ if __name__ == "__main__":
     header = ["Spatial \\ Radio"] + [r.upper() for r in radio_models]
     rows = []
     print("\n" + "="*100)
-    print(f"{'POSITIONING PERFORMANCE (MEDIAN ERROR) - wKNN TRAINED ON REAL + SYNTHETIC MDT DATA':^100}")
+    print(f"{'POSITIONING PERFORMANCE (MEDIAN ERROR)':^100}")
     print("="*100)
     baseline = test_positioning('wknn_baseline')
     for s in spatial_models:
