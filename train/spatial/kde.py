@@ -15,8 +15,7 @@ def train_kde():
     data = load_mdt_data('data/train.csv', mode='spatial')
     val_data = load_mdt_data('data/validation.csv', mode='spatial')
     
-    # 2. Select the bandwidth (same unit as the coordinates) by validation log-likelihood
-    # Grid spans 0.1% to ~100% of the coordinate spread so the optimum is not at the edge
+    # 2. Select the bandwidth by validation log-likelihood
     spread = data.std(axis=0).mean()
     bandwidths = spread * np.logspace(-3, 0, 31)
     scores = [KernelDensity(kernel='gaussian', bandwidth=bw).fit(data).score(val_data) for bw in bandwidths]
