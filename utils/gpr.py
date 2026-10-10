@@ -25,7 +25,4 @@ def fit_gpr(X, y, kernel, n_hyper=2000, seed=42):
     
     gpr_full = GeoRegressor(GaussianProcessRegressor(kernel=gpr.kernel_, normalize_y=True, optimizer=None, copy_X_train=False))
     gpr_full.fit(X, y)
-    # The N x N Cholesky factor is only needed for the predictive standard deviation, which
-    # the pipeline does not use; dropping it keeps the saved model small (mean prediction unchanged)
-    gpr_full.model.L_ = None
     return gpr_full

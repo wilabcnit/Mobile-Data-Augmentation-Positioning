@@ -13,7 +13,7 @@ H_BS, H_UT = 25.0, 1.5    # base station / UE heights (m)
 SF_STD = 7.8              # shadow fading std (dB), as in the manuscript (TR 38.901: UMa NLOS 6 dB, UMi NLOS 7.82 dB)
 SF_DCORR = 50.0           # shadow fading decorrelation distance (m), TR 38.901 Table 7.5-6, UMa NLOS
 
-MAX_REPORTED_CELLS = 10   # strongest cells in an MDT measurement report
+MAX_REPORTED_CELLS = 8    # strongest cells in an MDT measurement report
 DETECTION_THRESHOLD = -124.0
 UNSERVED_RSRP = -160      # RSRP stored for a cell that is not served
 

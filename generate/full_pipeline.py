@@ -113,7 +113,7 @@ def knn_radio(radio_model, coords):
     return np.rint(rsrp).astype(int)
 
 # Size of each synthetic dataset: SYNTHETIC_RATIO x the number of real training samples
-SYNTHETIC_RATIO = 5
+SYNTHETIC_RATIO = 2
 
 def n_synthetic(train_path='data/train.csv'):
     with open(train_path) as f:
@@ -199,9 +199,7 @@ def synthesize(spatial_algo, radio_algo, n_samples, seed=42, spatial=None, radio
         m_out = r_ckpt[out_m_key].cpu().numpy()
         s_out = r_ckpt[out_s_key].cpu().numpy()
         rsrp = rsrp_norm.numpy() * s_out + m_out
-
-    # No RSRP below the not-served value: anything under -160 is set to -160
-    rsrp = np.maximum(rsrp, UNSERVED_RSRP)
+    
     return coords, rsrp
 
 def generate_synthetic_data(spatial_algo, radio_algo, n_samples=5000, seed=42):
