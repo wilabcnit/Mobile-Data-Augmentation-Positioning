@@ -80,7 +80,7 @@ The augmentation pipeline consists of two independent modules:
 * **KDE:** Kernel Density Estimation (Gaussian Kernel), bandwidth selected on the validation set
 * **GMM:** Gaussian Mixture Models
 * **GAN:** Generative Adversarial Network
-* **NF:** Normalizing Flows (RealNVP architecture)
+* **NF:** Normalizing Flows
 
 ### 2. Radio Augmentation
 
