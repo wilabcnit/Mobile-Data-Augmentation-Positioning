@@ -15,7 +15,6 @@ def train_gpr_se():
     y = rsrps.numpy()
     
     # Kernel: Amplitude * RBF (Squared Exponential) + White noise (shadowing)
-    # Initial values only; they are learned by maximizing the marginal likelihood
     kernel = ConstantKernel(1.0) * RBF(length_scale=100.0) + WhiteKernel(noise_level=0.1)
     gpr = fit_gpr(X, y, kernel)
     os.makedirs('models/radio', exist_ok=True)
