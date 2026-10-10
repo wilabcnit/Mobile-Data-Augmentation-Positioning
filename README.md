@@ -1,8 +1,8 @@
 # MDT Augmentation for Improved Positioning in Mobile Networks
 
-This repository contains the code for the research paper: **"Improving Outdoor Multi-cell Fingerprinting-based Positioning via Mobile Data Augmentation."** https://arxiv.org/abs/2509.19405
+This repository contains the code for the paper **"Improving Outdoor Multi-cell Fingerprinting-based Positioning via Mobile Data Augmentation"** ([arXiv:2509.19405](https://arxiv.org/abs/2509.19405)).
 
-The real MDT dataset of the paper cannot be shared; the pipeline runs here on a mock MDT dataset (`generate_mock_data.py`).
+The real MDT dataset used in the paper cannot be shared. The pipeline is therefore provided with a synthetic MDT dataset that reproduces the main characteristics of real MDT data, so that it can be run end to end and applied to any MDT dataset with the same structure.
 
 ---
 
@@ -10,59 +10,45 @@ The real MDT dataset of the paper cannot be shared; the pipeline runs here on a 
 
 ```
 mdt_augmentation/
-├── data/                       # MDT datasets (70/10/20 split)
-│   ├── train.csv
-│   ├── validation.csv          # hyperparameter selection only
-│   └── test.csv
-├── augm_data/                  # Synthetic MDT datasets (32 combinations + radio KNN K = 2..5)
-├── models/                     # Saved models
-│   ├── spatial/                # KDE, GMM, GAN, NF models
-│   ├── radio/                  # KNN, RF, GPR, MLP, cGAN, NF, ReFlow models
+├── data/                       # MDT datasets (70/10/20 train/validation/test split)
+├── augm_data/                  # Synthetic MDT datasets
+├── models/                     # Trained models
+│   ├── spatial/                # KDE, GMM, GAN, NF
+│   ├── radio/                  # KNN, RF, GPR, MLP, cGAN, NF, ReFlow
 │   └── positioning/            # wKNN positioning models
-├── train/                      # Training scripts
-│   ├── spatial/
-│   └── radio/                  # knn.py trains K = 1 (pipeline) and K = 2..5 (ablation)
-├── test/                       # Evaluation scripts
-│   ├── spatial/                # 2-D (Fasano-Franceschini) KS test
-│   └── radio/                  # radio MAE (knn.py: K = 1..5)
-├── generate/                   # Synthetic data generator using trained modules
-│   └── full_pipeline.py
-├── positioning/                # Positioning algorithm
+├── train/                      # Training scripts (spatial/, radio/)
+├── test/                       # Evaluation scripts (spatial/, radio/)
+├── generate/
+│   └── full_pipeline.py        # Synthetic data generation
+├── positioning/
 │   ├── train.py
 │   ├── test.py
-│   └── knn_k_ablation.py       # radio KNN K = 1..5: validation / test positioning
-├── utils/
-│   ├── data_loader.py
-│   ├── geo.py                  # haversine distance, lat/lon -> metres
-│   ├── gpr.py
-│   ├── ks2d_ff.py              # 2-D Fasano-Franceschini KS test
-│   ├── metrics.py
-│   └── stats_compare.py
-├── generate_mock_data.py
-└── run_pipeline.sh             # full workflow, end to end
+│   └── knn_k_ablation.py       # Radio KNN with K = 1..5
+├── utils/                      # Data loading, geodesy, metrics, statistical tests
+├── generate_mock_data.py       # Synthetic MDT dataset
+└── run_pipeline.sh             # Full workflow
 ```
 
 ---
 
-## Dependencies
+## Getting Started
 
-Python 3.10+ and the versions used to train the stored models (`pip install -r requirements.txt`):
-* `torch` [2.14.1]
-* `numpy` [2.5.3]
-* `pandas` [3.0.5]
-* `scikit-learn` [1.9.1]
-* `scipy` [1.18.1]
-* `joblib` [1.6.0]
-* `tabulate`
+Python 3.10+ is required. Install the dependencies (versions used for the stored models):
 
-Generate the mock MDT dataset:
+```bash
+pip install -r requirements.txt
+```
+
+Generate the MDT dataset:
+
 ```bash
 python generate_mock_data.py
 ```
 
-This creates `data/train.csv` (70 %), `data/validation.csv` (10 %) and `data/test.csv` (20 %): 10,000 MDT measurements in a city-center scenario (WGS84 coordinates around Bologna, ~2 km²), 35 cells, 3GPP TR 38.901 UMa NLOS pathloss, 7.8 dB spatially correlated shadow fading. Each measurement reports at most the 8 strongest detected cells; the other cells are not served (RSRP = -160).
+This creates `data/train.csv` (70 %), `data/validation.csv` (10 %) and `data/test.csv` (20 %): 10,000 MDT measurements in a dense urban scenario with 35 cells (3GPP TR 38.901 UMa NLOS pathloss, 7.8 dB spatially correlated shadow fading). Each measurement reports at most the 8 strongest detected cells; the remaining cells are marked as not served (RSRP = -160 dBm).
 
-To run the whole workflow (data → models → synthetic data → positioning):
+Run the full workflow (data → models → synthetic data → positioning):
+
 ```bash
 ./run_pipeline.sh
 ```
@@ -71,79 +57,72 @@ To run the whole workflow (data → models → synthetic data → positioning):
 
 ## Methodology
 
-The augmentation pipeline consists of two independent modules:
+The augmentation pipeline consists of two independent modules.
 
 ### 1. Spatial Augmentation
 
-**Goal:** Learn the spatial distribution of users and generate new valid locations.
+Learns the spatial distribution of the users and generates new locations.
 
-* **KDE:** Kernel Density Estimation (Gaussian Kernel), bandwidth selected on the validation set
-* **GMM:** Gaussian Mixture Models
+* **KDE:** Kernel Density Estimation (Gaussian kernel)
+* **GMM:** Gaussian Mixture Model
 * **GAN:** Generative Adversarial Network
-* **NF:** Normalizing Flows
+* **NF:** Normalizing Flow
 
 ### 2. Radio Augmentation
 
-**Goal:** Learn the radio fingerprint of users and generate new valid radio fingerprints.
+Learns the radio fingerprint as a function of location and generates the fingerprints of the new locations.
 
-* **KNN:** K-Nearest Neighbors Regressor **(K=1)**: the synthetic fingerprint is the fingerprint of the nearest real measurement, including its not-served cells (-160)
-* **RF:** Random Forest Regressor
-* **GPR-RQ:** Gaussian Process (Rational Quadratic Kernel + white noise)
-* **GPR-SE:** Gaussian Process (Squared Exponential Kernel + white noise)
+* **KNN:** K-Nearest Neighbors (K = 1)
+* **RF:** Random Forest
+* **GPR-RQ:** Gaussian Process (Rational Quadratic kernel)
+* **GPR-SE:** Gaussian Process (Squared Exponential kernel)
 * **MLP:** Multi-Layer Perceptron
-* **cGAN:** Conditional GAN (least-squares objective)
+* **cGAN:** Conditional GAN
 * **NF:** Normalizing Flow
-* **ReFlow:** Rectified Flow (Diffusion-based model)
+* **ReFlow:** Rectified Flow
 
-The GPR models are large, so they are not stored: `python train/radio/gpr_rq.py` and `python train/radio/gpr_se.py` re-create them.
-
-**_Implementation Note:_** For the mock data provided here, we use a single "one-shot" training model. However, when dealing with real MDT data, models should be trained per-PCI (as done in the referenced paper) to accurately capture cell-specific signal characteristics.
+> **Note:** For simplicity, a single multi-output model is trained here. With real MDT data, the radio models should be trained per PCI, as in the paper, to capture cell-specific signal characteristics.
 
 ### 3. Positioning
 
-The final utility is assessed by training a **Weighted KNN (wKNN, K=3, inverse Manhattan distance between RSRP fingerprints)** positioning model on the augmented data (real training data + synthetic data) and testing it on the real test data. The positioning error is the haversine distance (m) between the estimated and true position.
+A weighted KNN (wKNN, K = 3) positioning model is trained on the real training data together with the synthetic data, and evaluated on the real test data.
 
-### 4. Generating Augmented Data
+---
 
-Each synthetic dataset has 2 × the real training size (14,000 samples). Generated RSRP values below -160 dBm (not served) are set to -160. To generate a specific synthetic dataset, or all of them (the 32 spatial × radio combinations and, for the K ablation, the radio KNN with K = 2..5: `synthetic_<spatial>_knn_k<K>.csv`):
+## Usage
 
+**Generate synthetic data.** Each synthetic dataset has twice the size of the real training set.
+
+```bash
+python generate/full_pipeline.py kde knn    # one spatial / radio combination
+python generate/full_pipeline.py all        # all combinations
 ```
-python generate/full_pipeline.py kde knn
-python generate/full_pipeline.py all
-```
 
-*Output is saved to `augm_data/`.*
+Output is saved to `augm_data/`.
 
-### 5. Training Positioning on Augmented Data
+**Train and test the positioning models:**
 
-1. Generate data (Step 4).
-2. Train wKNN (baseline + all combinations):
-```
+```bash
 python positioning/train.py all
-```
-
-3. Test on test set:
-```
 python positioning/test.py
+python positioning/knn_k_ablation.py
 ```
 
 ---
-## Performance Evaluation
 
-All results are on the real **test set**.  `*` =  different from the original data (95 % confidence interval).
+## Results
+
+All results are on the real test set. The KDE bandwidth and the radio KNN K are selected on the validation set. `*` = median error significantly different from the original data (paired bootstrap, 95 % confidence interval).
 
 ### Radio models: mean absolute error (dB)
-
-RSRP predicted at the test positions vs real RSRP (`python test/radio/<model>.py`).
 
 | | **KNN K=1** | KNN K=2 | KNN K=3 | KNN K=4 | KNN K=5 | GPR-RQ | RF | GPR-SE | MLP | cGAN | ReFlow | NF |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **MAE (dB)** | **2.53** | 2.76 | 2.97 | 3.16 | 3.32 | 3.17 | 3.76 | 5.09 | 8.98 | 12.78 | 12.76 | 24.35 |
 
-### Spatial models: 2-D Kolmogorov-Smirnov test
+### Spatial models: 2-D Kolmogorov–Smirnov test
 
-Generated vs. real test positions (`python test/spatial/<model>.py`). Since MAE is undefined for unpaired positions, distributions are compared using the 2-D Fasano–Franceschini KS test (1,000 permutations). Results are Means over 10 independent draws; lower statistics and higher p-values indicate better agreement.
-
+Generated vs. real test locations, 2-D Fasano–Franceschini KS test, mean over 10 independent draws. Lower statistic and higher p-value indicate better agreement.
 
 | | **KDE** | NF | GMM | GAN |
 | :--- | :--- | :--- | :--- | :--- |
@@ -151,25 +130,20 @@ Generated vs. real test positions (`python test/spatial/<model>.py`). Since MAE 
 
 ### Positioning: median error (m)
 
-The KNN radio model is reported for K = 1 (proposed, `python positioning/test.py`) and K = 2..5 (`python positioning/knn_k_ablation.py`).
-The positioning performance was then tested across all model combinations. The results below represent the Median Positioning Error achieved during this test run:
-
-| Spatial \ Radio | KNN K=1 | KNN K=2 | KNN K=3 | KNN K=4 | KNN K=5 | MLP | CGAN | GPR_RQ | GPR_SE | NF | REC_FLOW | RF |
+| Spatial \ Radio | **KNN K=1** | KNN K=2 | KNN K=3 | KNN K=4 | KNN K=5 | MLP | cGAN | GPR-RQ | GPR-SE | NF | ReFlow | RF |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Original data** | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m | 5.15m |
-| **KDE** | **4.91m\*** | 5.06m | 5.29m | 5.36m\* | 5.42m\* | 5.13m | 5.30m\* | 5.07m | 5.11m | 5.16m | 5.98m\* | 5.18m |
-| **NF** | 4.98m | 5.18m | 5.24m | 5.11m | 5.20m | 5.15m | 5.28m\* | 4.98m\* | 5.10m | 5.15m | 5.78m\* | 5.12m |
-| **GAN** | 4.92m\* | 5.13m | 5.29m | 5.35m\* | 5.33m\* | 5.14m | 5.28m\* | 5.04m\* | 5.19m | 5.17m | 5.71m\* | 5.18m |
-| **GMM** | 5.03m | 5.08m | 5.36m\* | 5.30m | 5.41m\* | 5.14m | 5.27m\* | 5.07m\* | 5.15m | 5.14m | 5.78m\* | 5.16m |
+| **Original data** | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 | 5.15 |
+| **KDE** | **4.92\*** | 5.06 | 5.29 | 5.36\* | 5.42\* | 5.13 | 5.30\* | 5.07 | 5.11 | 5.16 | 5.98\* | 5.18 |
+| **NF** | 4.98 | 5.18 | 5.24 | 5.11 | 5.20 | 5.15 | 5.28\* | 4.98\* | 5.10 | 5.15 | 5.78\* | 5.12 |
+| **GAN** | 4.92\* | 5.13 | 5.29 | 5.35\* | 5.33\* | 5.14 | 5.28\* | 5.04\* | 5.19 | 5.17 | 5.71\* | 5.18 |
+| **GMM** | 5.03 | 5.08 | 5.36\* | 5.30 | 5.41\* | 5.14 | 5.27\* | 5.07\* | 5.15 | 5.14 | 5.78\* | 5.16 |
 
-KDE + 1NN reduces the median error from 5.15 m to 4.92 m. With the 1NN radio model, the four spatial models are not significantly different from each other (paired bootstrap 95 % CI of the median difference, KDE vs GMM: -0.11 m [-0.36, 0.08]; vs NF: -0.06 m [-0.29, 0.09]; vs GAN: 0.00 m [-0.28, 0.21]); KDE is preferred for its closer spatial fit (2-D KS). KNN with K = 1 is the best radio model for every spatial model; K > 1 averages RSRP values with the -160 not-served value, while K = 1 copies the nearest real fingerprint with its exact set of served / not-served cells.
-
-K is selected on the **validation set** (median positioning error, `python positioning/knn_k_ablation.py`): K = 1 is the best for every spatial model.
-
+---
 
 ## Citation
 
-If you use this code for your research, please cite:
+If you use this code in your research, please cite:
+
 ```
 @article{chahoud2025improving,
   title={Improving Outdoor Multi-cell Fingerprinting-based Positioning via Mobile Data Augmentation},
