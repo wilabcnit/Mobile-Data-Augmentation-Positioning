@@ -13,7 +13,7 @@ def train_gmm(n_components=3):
     data = load_mdt_data('data/train.csv', mode='spatial')
     val_data = load_mdt_data('data/validation.csv', mode='spatial')
     
-    # 2. Fit a GMM with a fixed number of components (3), full covariances
+    # 2. Fit a GMM with a full covariances
     gmm = GaussianMixture(n_components=n_components, covariance_type='full', random_state=42, max_iter=200, n_init=3)
     gmm.fit(data)
     
