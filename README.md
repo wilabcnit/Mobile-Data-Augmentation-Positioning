@@ -33,7 +33,7 @@ mdt_augmentation/
 
 ## Getting Started
 
-Python 3.12+ is required. Install the dependencies (versions used for the stored models):
+Python 3.12+ is required. Install the dependencies (versions used for the stored models) for venv.:
 
 ```bash
 pip install -r requirements.txt
