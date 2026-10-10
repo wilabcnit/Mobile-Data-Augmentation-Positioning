@@ -78,7 +78,7 @@ The augmentation pipeline consists of two independent modules:
 **Goal:** Learn the spatial distribution of users and generate new valid locations.
 
 * **KDE:** Kernel Density Estimation (Gaussian Kernel), bandwidth selected on the validation set
-* **GMM:** Gaussian Mixture Models, 3 components (fixed), full covariances
+* **GMM:** Gaussian Mixture Models
 * **GAN:** Generative Adversarial Network
 * **NF:** Normalizing Flows (RealNVP architecture)
 
