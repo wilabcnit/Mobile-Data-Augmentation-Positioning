@@ -72,7 +72,7 @@ Learns the spatial distribution of the users and generates new locations.
 
 Learns the radio fingerprint as a function of location and generates the fingerprints of the new locations.
 
-* **KNN:** K-Nearest Neighbors *(K = 1 in the proposed model)**
+* **KNN:** K-Nearest Neighbors *(K = 1 in the proposed model)*
 * **RF:** Random Forest
 * **GPR-RQ:** Gaussian Process (Rational Quadratic kernel)
 * **GPR-SE:** Gaussian Process (Squared Exponential kernel)
