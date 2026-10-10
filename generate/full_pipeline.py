@@ -199,7 +199,9 @@ def synthesize(spatial_algo, radio_algo, n_samples, seed=42, spatial=None, radio
         m_out = r_ckpt[out_m_key].cpu().numpy()
         s_out = r_ckpt[out_s_key].cpu().numpy()
         rsrp = rsrp_norm.numpy() * s_out + m_out
-    
+
+    # No RSRP below the not-served value: anything under -160 is set to -160
+    rsrp = np.maximum(rsrp, UNSERVED_RSRP)
     return coords, rsrp
 
 def generate_synthetic_data(spatial_algo, radio_algo, n_samples=5000, seed=42):
