@@ -94,9 +94,6 @@ def knn_radio(radio_model, coords):
     Radio KNN generation: RSRP predicted by the KNN, then the unserved-cell state of the
     nearest real measurement is kept: a cell that is not served (RSRP = -160) at the nearest
     original position is also not served at the synthetic position.
-    
-    One neighbour search serves both steps. With K = 1 the prediction is the nearest real
-    fingerprint itself (it already carries its not-served cells), so it is a row lookup.
     """
     k = radio_model.model.n_neighbors
     dist, idx = radio_model.kneighbors(coords, k)
@@ -105,7 +102,6 @@ def knn_radio(radio_model, coords):
         rsrp = neighbours[:, 0].astype(float)
     else:
         # Inverse-distance weights as in KNeighborsRegressor(weights='distance'):
-        # a neighbour at distance 0 takes all the weight
         with np.errstate(divide='ignore'):
             weights = 1.0 / dist
         exact = np.isinf(weights)
@@ -128,7 +124,7 @@ SPATIAL_MODELS = ['kde', 'nf', 'gan', 'gmm']
 KNN_ABLATION_MODELS = [f'knn_k{k}' for k in KNN_K_VALUES if k != 1]   # augm_data/synthetic_<spatial>_knn_k<K>.csv
 RADIO_MODELS = ['knn', 'mlp', 'cgan', 'gpr_rq', 'gpr_se', 'nf', 'rec_flow', 'rf']
 
-PREDICT_BATCH = 20000   # sklearn models predict in batches (exact GPR needs a batch x N_train kernel matrix)
+PREDICT_BATCH = 20000   
 
 def batched_predict(fn, coords, batch=PREDICT_BATCH):
     return np.concatenate([fn(coords[i:i + batch]) for i in range(0, len(coords), batch)])
@@ -139,7 +135,6 @@ def synthesize(spatial_algo, radio_algo, n_samples, seed=42, spatial=None, radio
     RSRP from the radio model. spatial / radio are (model, checkpoint) pairs; they are
     loaded from models/ when not given. Returns (coords [N, 2], rsrp [N, n_cells]).
     """
-    # Fixed seeds so the synthetic datasets (and the results table) are reproducible
     np.random.seed(seed)
     torch.manual_seed(seed)
     
@@ -203,8 +198,6 @@ def synthesize(spatial_algo, radio_algo, n_samples, seed=42, spatial=None, radio
         m_out = r_ckpt[out_m_key].cpu().numpy()
         s_out = r_ckpt[out_s_key].cpu().numpy()
         rsrp = rsrp_norm.numpy() * s_out + m_out
-
-    # No RSRP below the not-served value: anything under -160 is set to -160
     rsrp = np.maximum(rsrp, UNSERVED_RSRP)
     return coords, rsrp
 
