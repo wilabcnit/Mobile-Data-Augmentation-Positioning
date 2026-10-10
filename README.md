@@ -45,7 +45,7 @@ Generate the MDT dataset:
 python generate_mock_data.py
 ```
 
-This creates `data/train.csv` (70 %), `data/validation.csv` (10 %) and `data/test.csv` (20 %): 10,000 MDT measurements in a dense urban scenario with 35 cells (3GPP TR 38.901 UMa NLOS pathloss, 7.8 dB spatially correlated shadow fading). Each measurement reports at most the 8 strongest detected cells; the remaining cells are marked as not served (RSRP = -160 dBm).
+This creates a mock MDT dataset that mimics a real dense urban deployment: 10,000 measurements over 35 cells, with realistic propagation (3GPP TR 38.901) and MDT reporting (8 reported cells per measurement). It is split into train (70 %), validation (10 %) and test (20 %).
 
 Run the full workflow (data → models → synthetic data → positioning):
 
