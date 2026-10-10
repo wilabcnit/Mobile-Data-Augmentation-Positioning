@@ -1,3 +1,7 @@
+#To Run it:
+#python generate/full_pipeline.py kde knn    # generate kde-knn model only
+#OR#
+#python generate/full_pipeline.py all        # all Models
 import sys
 import os
 import torch
