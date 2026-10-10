@@ -41,13 +41,14 @@ def compare_models_ci(data1, data2, label1="Model 1", label2="Model 2", confiden
 def compare_models_paired(errors1, errors2, label1="Model 1", label2="Model 2", confidence=0.95,
                           n_boot=2000, seed=0):
     """
-    Compares two models evaluated on the SAME test points (errors1[i] and errors2[i] refer
-    to the same test sample), so the comparison is paired.
-
-    Significance is decided on the MEDIAN errors: paired bootstrap confidence interval
-    (resampling test points) on the difference of medians; the difference is significant
-    if the interval excludes 0. The Wilcoxon signed-rank p-value on the per-point
-    differences is also reported.
+    
+    Paired comparison of two models evaluated on the same test points: significance is
+    decided on the median errors with a paired bootstrap 95% CI of the median difference
+    (resampling test points), significant if the CI excludes 0; the Wilcoxon signed-rank
+    p-value is also reported. Here each synthetic dataset is generated once, so the CI
+    reflects test-set variability only; in the paper (real MDT data), it was computed over
+    10 independent generation runs.
+    
     """
     errors1, errors2 = np.asarray(errors1, float), np.asarray(errors2, float)
     if errors1.shape != errors2.shape:
