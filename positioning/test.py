@@ -26,7 +26,7 @@ def test_positioning(model_name):
     # 3. Predict Locations
     y_pred = wknn.predict(X_test)
 
-    # 4. Calculate Positioning Error (metres between WGS84 positions)
+    # 4. Calculate Positioning Error 
     errors = haversine_distance(y_pred, y_test)
 
     return {
