@@ -32,7 +32,13 @@ class GeoRegressor:
         return self
 
     def predict(self, X):
-        return self.model.predict(to_local_m(X))
+        m = self.model
+        if getattr(m, 'L_', 0) is None:
+            # GPR stored for mean prediction only (no Cholesky factor): posterior mean
+            # K(X, X_train) @ alpha, then undo the y normalization
+            y = m.kernel_(to_local_m(X), m.X_train_) @ m.alpha_
+            return m._y_train_std * y + m._y_train_mean
+        return m.predict(to_local_m(X))
 
     def kneighbors(self, X, n_neighbors=None):
         return self.model.kneighbors(to_local_m(X), n_neighbors)
