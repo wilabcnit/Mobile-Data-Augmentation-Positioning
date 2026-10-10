@@ -2,7 +2,7 @@
 
 This repository contains the code for the paper **"Improving Outdoor Multi-cell Fingerprinting-based Positioning via Mobile Data Augmentation"** ([arXiv:2509.19405](https://arxiv.org/abs/2509.19405)).
 
-The real MDT dataset used in the paper cannot be shared. This repository therefore includes a mock MDT dataset designed to reproduces the main characteristics of real MDT data, so that pipeline can be run end to end and applied to any MDT dataset with the same structure.
+The real MDT dataset used in the paper cannot be shared. This repository therefore includes a mock MDT dataset designed to reproduce the main characteristics of real MDT data, so that the pipeline can be run end to end and applied to any MDT dataset with the same structure.
 
 ---
 
@@ -11,7 +11,7 @@ The real MDT dataset used in the paper cannot be shared. This repository therefo
 ```
 mdt_augmentation/
 ├── data/                       # MDT datasets (70/10/20 train/validation/test split)
-├── augm_data/                  # Synthetic MDT datasets
+├── augm_data/                  # Augmented (synthetic) MDT datasets
 ├── models/                     # Trained models
 │   ├── spatial/                # KDE, GMM, GAN, NF
 │   ├── radio/                  # KNN, RF, GPR, MLP, cGAN, NF, ReFlow
@@ -25,7 +25,7 @@ mdt_augmentation/
 │   ├── test.py
 │   └── knn_k_ablation.py       # Radio KNN with K = 1..5
 ├── utils/                      # Data loading, geodesy, metrics, statistical tests
-├── generate_mock_data.py       # Synthetic MDT dataset
+├── generate_mock_data.py       # Mock MDT dataset
 └── run_pipeline.sh             # Full workflow
 ```
 
@@ -112,7 +112,7 @@ python positioning/knn_k_ablation.py
 
 ## Results
 
-All results are on the real test set. The KDE bandwidth and the radio KNN K are selected on the validation set.
+All results are on the original (non-augmented) test set. The KDE bandwidth and the radio KNN K are selected on the validation set.
 
 ### Radio models: mean absolute error (dB)
 
@@ -138,11 +138,13 @@ Generated vs. real test locations, 2-D Fasano–Franceschini KS test, mean over 
 | **GAN** | 4.92\* | 5.13 | 5.29 | 5.35\* | 5.33\* | 5.14 | 5.28\* | 5.04\* | 5.19 | 5.17 | 5.71\* | 5.18 |
 | **GMM** | 5.03 | 5.08 | 5.36\* | 5.30 | 5.41\* | 5.14 | 5.27\* | 5.07\* | 5.15 | 5.14 | 5.78\* | 5.16 |
 
+*`*` = median error significantly different from the original data (paired bootstrap, 95% confidence interval).*
+
 > **Note:** All results above are obtained on the fully synthetic mock MDT dataset (`generate_mock_data.py`), not on the real MDT data of the paper. They illustrate the pipeline and are not intended to reproduce the values reported in the paper.
 
 ---
-*`*` = median error significantly different from the original data (paired bootstrap, 95% confidence interval).*
 
+## Citation
 
 If you use this code in your research, please cite:
 
