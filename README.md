@@ -85,7 +85,7 @@ Learns the radio fingerprint as a function of location and generates the fingerp
 
 ### 3. Positioning
 
-A weighted KNN (wKNN, K = 3) positioning model is trained on the real training data together with the synthetic data, and evaluated on the real test data.
+A weighted KNN (wKNN, _K = 3_) positioning model is trained on the real training data together with the synthetic data, and evaluated on the real test data.
 
 ---
 
