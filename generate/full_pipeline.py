@@ -113,7 +113,7 @@ def knn_radio(radio_model, coords):
     return np.rint(rsrp).astype(int)
 
 # Size of each synthetic dataset: SYNTHETIC_RATIO x the number of real training samples
-SYNTHETIC_RATIO = 2
+SYNTHETIC_RATIO = 5
 
 def n_synthetic(train_path='data/train.csv'):
     with open(train_path) as f:
