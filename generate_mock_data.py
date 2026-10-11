@@ -4,7 +4,7 @@ import os
 from sklearn.model_selection import train_test_split
 
 # Fake Scenario: city center around Bologna (WGS84), 3GPP TR 38.901 UMa NLOS radio model
-REF_LAT, REF_LON = 44.4938, 11.3426   # reference point (Piazza Maggiore)
+# These parameters can be adjusted according to the fake scenario being generated.
 EARTH_RADIUS = 6371008.8              # m
 
 FC = 1.8                  # carrier frequency (GHz)
