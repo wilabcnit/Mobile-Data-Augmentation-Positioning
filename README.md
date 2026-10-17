@@ -2,7 +2,7 @@
 
 This repository contains the code for the paper **"Improving Outdoor Multi-cell Fingerprinting-based Positioning via Mobile Data Augmentation"** ([arXiv:2509.19405](https://arxiv.org/abs/2509.19405)).
 
-The real MDT dataset used in the paper cannot be shared. This repository therefore includes a mock MDT dataset designed to reproduce the main characteristics of real MDT data, so that the pipeline can be run end to end and applied to any MDT dataset with the same structure.
+The real minimization of drive-tests (MDT) dataset used in the paper cannot be disclosed due to user privacy concerns. This repository therefore includes a mock MDT dataset designed to reproduce the main characteristics of real MDT data, so that the pipeline can be run end to end and applied to any MDT dataset with the same structure.
 
 ---
 
@@ -81,7 +81,7 @@ Learns the radio fingerprint as a function of location and generates the fingerp
 * **NF:** Normalizing Flow
 * **ReFlow:** Rectified Flow
 
-> **Note:** For simplicity, a single multi-output model is trained here. With real MDT data, the radio models should be trained per PCI, as in the paper, to capture cell-specific signal characteristics.
+> **Note:** We provide a single multi-output model. Alternatively, with real MDT data, the radio models can be trained per PCI, to capture cell-specific signal characteristics.
 
 ### 3. Positioning
 
